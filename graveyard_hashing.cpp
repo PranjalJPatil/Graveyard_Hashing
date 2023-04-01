@@ -6,7 +6,7 @@ using namespace std;
 
 class Graveyard_Hash{
     vector<uint64_t> v ;
-
+    int tot=0;
     size_t  n;
     //tombstones are uint64_max;
     public:
@@ -18,16 +18,20 @@ class Graveyard_Hash{
     bool query_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x,sizeof(uint64_t),0) % n;
         uint64_t i = hashval;
+        int k=0;
         do{
             if(v[i] == 0 || ((MurmurHash64A(&v[i],sizeof(uint64_t),0) % n) > hashval && (MurmurHash64A(&v[i],sizeof(uint64_t),0) % n) <= i )){
                 return 0;
             }   
             else if(v[i] == x){
+                cout<<k<<" ";
                 return 1;
             }        
             i++;
             i = i%n;
+            k++;
         }while(i != hashval);
+        cout<<k<<" ";
         return 0;
     }
     void insert_(uint64_t x){
@@ -35,6 +39,7 @@ class Graveyard_Hash{
         uint64_t i = hashval;
         bool b = 0, flag=0;;
         uint64_t ind= 0;
+        
         cout<<i<<" fffff "<<x<<endl;
         do{
             if(v[i] == 0  || v[i] ==  UINT64_MAX){
@@ -80,17 +85,21 @@ class Graveyard_Hash{
     void delete_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x,sizeof(uint64_t),0) % n;
         uint64_t i = hashval;
+        int k=0;
         do{
-            if(v[i] == 0 || (MurmurHash64A(&v[i],sizeof(uint64_t),0) % n) != hashval){
+            if(v[i] == 0 || ((MurmurHash64A(&v[i],sizeof(uint64_t),0) % n) > hashval && (MurmurHash64A(&v[i],sizeof(uint64_t),0) % n) <= i )){
                 return ;
             }   
             else if(v[i] == x){
-                v[i]= UINT64_MAX ;
+                cout<<k<<" ";
+                v[i] = UINT64_MAX;
                 return ;
             }        
             i++;
             i = i%n;
+            k++;
         }while(i != hashval);
+        cout<<k<<" ";
         return ;
     }
     void print(){

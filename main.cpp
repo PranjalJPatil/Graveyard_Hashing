@@ -10,9 +10,13 @@ int main(){
     Graveyard_Hash *ob = new Graveyard_Hash();
     uint64_t t= 4;
     for(uint64_t i=1;i<=100;i++)
-    {    ob->insert_(i);
+    {    ob->insert_(i);}
         ob->print();
-    }
+    
+    for(uint64_t i=1;i<=100;i++)
+        cout<<" "<<i<<" "<<ob->query_(i)<<endl;
+    for(uint64_t i=1;i<=30;i++)
+        ob->delete_(i);
     for(uint64_t i=1;i<=100;i++)
         cout<<" "<<i<<" "<<ob->query_(i)<<endl;
     return 1;
