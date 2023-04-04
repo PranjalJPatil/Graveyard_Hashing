@@ -15,8 +15,8 @@ class Graveyard_Hash{
     int k =0 ;
     //tombstones are uint64_max;
     public:
-    Graveyard_Hash(){
-        n= 1000;
+    Graveyard_Hash(size_t kn){
+        n= kn;
         st = 0 ;
         keys.resize(n);
         values.resize(n);
@@ -50,9 +50,7 @@ class Graveyard_Hash{
 
     }
     void insert_(uint64_t x){
-        //umap[x]= id;
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
-        cout<<x<<" " <<hashval<<endl;
         int ind;
         bool b=0;
         if(hashval>= st){
@@ -220,7 +218,7 @@ class Graveyard_Hash{
     }
     void delete_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
-        cout<<st<<" "<<hashval<<endl;
+     //   cout<<st<<" "<<hashval<<endl;
         int i;
         if(hashval < st){
             i = st; 
@@ -248,15 +246,23 @@ class Graveyard_Hash{
     }
 
     void resizing_at(){
-        vector<int> v(n);
+        cout<<"jj"<<st<<endl;
+        vector<uint64_t> v(n);
         int x = 6;
         
-        for(int i=0;i<n;i += k){
+        for(int i=0;i<n;i += x){
             v[i]= UINT64_MAX;
         }
+        
         int j = st;
-        for(int i=0 ; i<n ;i++){
-            int t = MurmurHash64A(&keys[j], sizeof(uint64_t),0)%n;
+        for(int i=0 ; i<n ; i++){
+            int t = MurmurHash64A( &keys[j], sizeof(uint64_t),0)%n;
+            if(keys[j] == 0 || keys[j] == UINT64_MAX){
+                j++;
+                i--;
+                j= j%n;
+                continue;
+            }
             if(i < t){
                 i= t;
                 if(v[i]==UINT64_MAX)continue;
@@ -265,16 +271,33 @@ class Graveyard_Hash{
                 j= j%n;
                 continue;
             }
+            if(v[i]==UINT64_MAX)continue;
             v[i]= keys[j];
             j++;
             j= j%n;
         }
-        int left;
-        if(j>=0){
-            left= st-j;
+        int left=0;
+        if(j==0)j= n-1;
+        else
+        j--;
+        int h=j;
+        while(h!=st){
+            if(keys[h] == 0 || keys[h] == UINT64_MAX){
+                h++;
+                h= h%n;
+                continue;
+            }    
+            left++;
+            h++;
+            h= h%n;
         }
-        else{
-            left= (st)+n-j;
+        
+        cout<<" left"<<left<<"j"<<j<<endl;
+        if(left == 0){
+            for(int i=0;i<n;i++){
+                keys[i]= v[i];
+            }
+          return ;  
         }
         int k= 0;
         while(left!=0){
@@ -284,10 +307,21 @@ class Graveyard_Hash{
             k++;
         }
         k--;
+        cout<<"k"<<k<<"  "<<endl;
+
+        for(int p=0;p<n;p++){
+            cout<<v[p]<<"  ";
+        }
+        cout<<endl;
+        for(int p=0;p<n;p++){
+            cout<<keys[p]<<" == "<<(MurmurHash64A(&keys[p], sizeof(uint64_t), 0)%n)<<endl;
+        }
+        cout<<endl;
         int tempst;
         int i= k;
-        while(i!=0){
+        while(1){
             if(v[i]==0 || v[i]== UINT64_MAX){
+                if(i==0)break;
                 i--;
             }
             else{
@@ -299,34 +333,50 @@ class Graveyard_Hash{
                 
                 tempst = k;
                 k--;
+                if(i==0)break;
                 i--;
+                
             } 
         }
-        i=0;
-        while(j!=st){
+
+         i=0;
+         while(j!=st){
             if(v[i] == UINT64_MAX){
                 i++;
                 continue;
             }
             else{
+                if(keys[j]==0|| keys[j]==UINT64_MAX){
+                    j++;
+                    j= j%n;
+                    continue;
+                }
                 v[i]= keys[j];
                 j++;
                 j= j%n;
+                i++;
+
             }
         }
         for(int i=0;i<n;i++){
             keys[i]= v[i];
         }
         st = tempst;
+        cout<<"fnst"<<st;
     }
 
     void normal_resize(){
-        vector<int> v(n);
-        int x = 6;
-       
+
+        vector<uint64_t> v(n);
         int j = st;
-        for(int i=0 ; i<n ;i++){
-            int t = MurmurHash64A(&keys[j], sizeof(uint64_t),0)%n;
+        for(int i=0 ; i<n ; i++){
+            int t = MurmurHash64A( &keys[j], sizeof(uint64_t),0)%n;
+            if(keys[j] == 0 || keys[j] == UINT64_MAX){
+                j++;
+                i--;
+                j= j%n;
+                continue;
+            }
             if(i < t){
                 i= t;
                 if(v[i]==UINT64_MAX)continue;
@@ -335,16 +385,33 @@ class Graveyard_Hash{
                 j= j%n;
                 continue;
             }
+            if(v[i]==UINT64_MAX)continue;
             v[i]= keys[j];
             j++;
             j= j%n;
         }
-        int left;
-        if(j>=0){
-            left= st-j;
+        int left=0;
+        if(j==0)j= n-1;
+        else
+        j--;
+        int h=j;
+        while(h!=st){
+            if(keys[h] == 0 || keys[h] == UINT64_MAX){
+                h++;
+                h= h%n;
+                continue;
+            }    
+            left++;
+            h++;
+            h= h%n;
         }
-        else{
-            left= (st)+n-j;
+        
+        cout<<" left"<<left<<"j"<<j<<endl;
+        if(left == 0){
+            for(int i=0;i<n;i++){
+                keys[i]= v[i];
+            }
+          return ;  
         }
         int k= 0;
         while(left!=0){
@@ -354,10 +421,21 @@ class Graveyard_Hash{
             k++;
         }
         k--;
+        cout<<"k"<<k<<"  "<<endl;
+
+        for(int p=0;p<n;p++){
+            cout<<v[p]<<"  ";
+        }
+        cout<<endl;
+        for(int p=0;p<n;p++){
+            cout<<keys[p]<<" == "<<(MurmurHash64A(&keys[p], sizeof(uint64_t), 0)%n)<<endl;
+        }
+        cout<<endl;
         int tempst;
         int i= k;
-        while(i!=0){
+        while(1){
             if(v[i]==0 || v[i]== UINT64_MAX){
+                if(i==0)break;
                 i--;
             }
             else{
@@ -369,25 +447,36 @@ class Graveyard_Hash{
                 
                 tempst = k;
                 k--;
+                if(i==0)break;
                 i--;
+                
             } 
         }
-        i=0;
-        while(j!=st){
+
+         i=0;
+         while(j!=st){
             if(v[i] == UINT64_MAX){
                 i++;
                 continue;
             }
             else{
+                if(keys[j]==0|| keys[j]==UINT64_MAX){
+                    j++;
+                    j= j%n;
+                    continue;
+                }
                 v[i]= keys[j];
                 j++;
                 j= j%n;
+                i++;
+
             }
         }
         for(int i=0;i<n;i++){
             keys[i]= v[i];
         }
         st = tempst;
+        cout<<"fnst"<<st;
     }
     void print(){
         cout<<st<<" total "<<endl;
