@@ -9,14 +9,15 @@ class Graveyard_Hash{
     vector<uint64_t> keys ;
     vector<uint64_t> values ;
     uint64_t st ;
-    unordered_map<int,int> umap ;
     int tot=0 ;
     size_t  n ;
+    int lf;
     int k =0 ;
     //tombstones are uint64_max;
     public:
     Graveyard_Hash(size_t kn){
         n= kn;
+        lf = 20 ;
         st = 0 ;
         keys.resize(n);
         values.resize(n);
@@ -246,11 +247,11 @@ class Graveyard_Hash{
     }
 
     void resizing_at(){
-        cout<<"jj"<<st<<endl;
+        //cout<<"jj"<<st<<endl;
         vector<uint64_t> v(n);
-        int x = 6;
         
-        for(int i=0;i<n;i += x){
+        
+        for(int i=0;i<n;i += lf){
             v[i]= UINT64_MAX;
         }
         
@@ -292,7 +293,7 @@ class Graveyard_Hash{
             h= h%n;
         }
         
-        cout<<" left"<<left<<"j"<<j<<endl;
+       // cout<<" left"<<left<<"j"<<j<<endl;
         if(left == 0){
             for(int i=0;i<n;i++){
                 keys[i]= v[i];
@@ -307,16 +308,16 @@ class Graveyard_Hash{
             k++;
         }
         k--;
-        cout<<"k"<<k<<"  "<<endl;
+        // cout<<"k"<<k<<"  "<<endl;
 
-        for(int p=0;p<n;p++){
-            cout<<v[p]<<"  ";
-        }
-        cout<<endl;
-        for(int p=0;p<n;p++){
-            cout<<keys[p]<<" == "<<(MurmurHash64A(&keys[p], sizeof(uint64_t), 0)%n)<<endl;
-        }
-        cout<<endl;
+        // for(int p=0;p<n;p++){
+        //     cout<<v[p]<<"  ";
+        // }
+        // cout<<endl;
+        // for(int p=0;p<n;p++){
+        //     cout<<keys[p]<<" == "<<(MurmurHash64A(&keys[p], sizeof(uint64_t), 0)%n)<<endl;
+        // }
+        // cout<<endl;
         int tempst;
         int i= k;
         while(1){
@@ -362,7 +363,7 @@ class Graveyard_Hash{
             keys[i]= v[i];
         }
         st = tempst;
-        cout<<"fnst"<<st;
+        //cout<<"fnst"<<st;
     }
 
     void normal_resize(){

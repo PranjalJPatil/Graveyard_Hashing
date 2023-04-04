@@ -1,58 +1,124 @@
 #include<iostream>
+#include<fstream>
+#include <chrono>
 #include<vector>
-
+#include <string>
 #include "graveyardhashing_AT.cpp"
 #include "robinhood.cpp"
 #include "robinhood_TOMB.cpp"
 
 
 using namespace std;
-
+using namespace std::chrono;
+//auto diff = std::chrono::high_resolution_clock::now() - start; // get difference 
+//auto nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(diff);
+double elapsed(high_resolution_clock::time_point t1, high_resolution_clock::time_point t2) {
+	return (duration_cast<duration<double>>(t2 - t1)).count();
+}
 int main(){
+     ofstream myFile;
+     myFile.open("test.csv");
+    myFile<<"Iterations"<<","<<"D-RH"<<","<<"D-RHT"<<","<<"D-GH"<<","<<"I-RH"<<","<<"D-RHT"<<","<<"D-GH"<<endl;
 
-    Robinhood_Hash *ob = new Robinhood_Hash(100);
-    for(int i=1;i<=100;i++){
-        ob->insert_(i);
+    high_resolution_clock::time_point t1, t2;
+
+    Robinhood_Hash *ob1 = new Robinhood_Hash(100000);
+    Robinhoodtomb_Hash *ob2 = new Robinhoodtomb_Hash(100000);
+    Graveyard_Hash *ob3 = new Graveyard_Hash(100000);
+
+    t1 = high_resolution_clock::now();
+    for(int i=1;i<=90000;i++){
+        ob1->insert_(i);
     }
-    for(int i=1;i<=45;i++){
-         cout<<i<<" "<<ob->query_(i)<<endl;
+   	t2 = high_resolution_clock::now();
+	std::cout << "Time insert 100000 items : " + std::to_string(elapsed(t1, t2)) + " secs\n";
+    t1 = high_resolution_clock::now();
+    for(int i=1;i<=90000;i++){
+        ob2->insert_(i);
     }
-    cout<<"ppppppppppppppppppppppp";
-    for(int i=1;i<=15;i++){
-         ob->delete_(i);
-     }
-    for(int i=1;i<=100;i++){
-         cout<<i<<" "<<ob->query_(i)<<endl;
+   	t2 = high_resolution_clock::now();
+	std::cout << "Time insert 100000 items : " + std::to_string(elapsed(t1, t2)) + " secs\n";
+    t1 = high_resolution_clock::now();
+    for(int i=1;i<=90000;i++){
+        ob3->insert_(i);
     }
-    //ob->print();
-    // for(int i=1;i<10000;i++){
-    //     ob->insert_(i);
-    // }
-    // for(int i=1;i<10000;i++){
-    //     bool b= ob->query_(i);
-    //     if(b==0)cout<<i<<"WRONG ELEMENT-1";
-    // }
-    // for(int i=1;i<5000;i++){
-    //     ob->delete_(i);  
-    // }
-    // for(int i=1;i<5000;i++){
-    //     bool b= ob->query_(i);
-    //     if(b==1)cout<<"WRONG ELEMENT-2";
-    // }
-    //  for(int i=5000;i<10000;i++){
-    //     bool b= ob->query_(i);
-    //     if(b==0)cout<<"WRONG ELEMENT-3";
-    // }
-    // for(int i=2001;i<5000;i++){
-    //     ob->insert_(i);  
-    // }
-    // for(int i=1;i<=2000;i++){
-    //     bool b= ob->query_(i);
-    //     if(b==1)cout<<"WRONG ELEMENT-2";
-    // }
-    //  for(int i=2001;i<10000;i++){
-    //     bool b= ob->query_(i);
-    //     if(b==0)cout<<"WRONG ELEMENT-3";
+   	t2 = high_resolution_clock::now();
+	std::cout << "Time insert 100000 items : " + std::to_string(elapsed(t1, t2)) + " secs\n";
+    int add_st=90001, del_st=1;
+    cout<<endl;
+    int k = 0;
+    for(int j=0;j<1000;j++){
+        //DELETION
+        double s1,s2, s3, s4,s5,s6;
+        t1 = high_resolution_clock::now();
+        for(int i=del_st;i<del_st+5000;i++){
+            ob1->delete_(i);
+        }
+        t2 = high_resolution_clock::now();
+        std::cout << "Time delete 5000 items Robinhood_Hash : " + std::to_string(elapsed(t1, t2)) + " secs\n";
+        s1=elapsed(t1, t2);
+        t1 = high_resolution_clock::now();
+        for(int i=del_st;i<del_st+5000;i++){
+            ob2->delete_(i);
+        }
+        t2 = high_resolution_clock::now();
+        std::cout << "Time delete 5000 items Robinhoodtomb_Hash : " + std::to_string(elapsed(t1, t2)) + " secs\n";
+        s2=elapsed(t1, t2);
+
+        t1 = high_resolution_clock::now();
+        for(int i=del_st;i<del_st+5000;i++){
+            ob3->delete_(i);
+        }
+        t2 = high_resolution_clock::now();
+        s3=elapsed(t1, t2);
+
+        std::cout << "Time delete 5000 items Graveyard_Hash: " + std::to_string(elapsed(t1, t2)) + " secs\n";
+        del_st= del_st+5000;
+
+        //INSERTION
+        t1 = high_resolution_clock::now();
+        for(int i=add_st;i<add_st+5000;i++){
+            ob1->insert_(i);
+        }
+        t2 = high_resolution_clock::now();
+        std::cout << "Time insert 5000 items Robinhood_Hash : " + std::to_string(elapsed(t1, t2)) + " secs\n";
+        s4 = elapsed(t1,t2);
+        t1 = high_resolution_clock::now();
+        for(int i=add_st;i<add_st+5000;i++){
+            ob2->insert_(i);
+        }
+        t2 = high_resolution_clock::now();
+        std::cout << "Time insert 5000 items Robinhoodtomb_Hash : " + std::to_string(elapsed(t1, t2)) + " secs\n";
+        s5=elapsed(t1, t2);
+
+        t1 = high_resolution_clock::now();
+
+        for(int i=add_st;i<add_st+5000;i++){
+            ob3->insert_(i);
+        }
+        t2 = high_resolution_clock::now();
+        s6=elapsed(t1, t2);
+        std::cout << "Time insert 5000 items Graveyard_Hash: " + std::to_string(elapsed(t1, t2)) + " secs\n";
+        add_st = add_st+5000;
+        k++;
+        if(k%3 == 0){
+            ob3->resizing_at();
+            ob2->resize_();
+
+        }
+    
+         myFile<<j+1<<","<<s1<<","<<s2<<","<<s3<<","<<s4<<","<<s5<<","<<s6<<endl;
+     
+        cout<<endl;
+        cout<<endl;
+
+    }
+
+
+    // ofstream myFile;
+    // myFile.open("test.csv");
+    // for(int i=0;i<10;i++){
+    //     myFile<<i<<","<<i*i<<endl;
     // }
     return 1;
 

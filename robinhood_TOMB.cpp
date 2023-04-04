@@ -1,253 +1,363 @@
 #include<iostream>
 #include<vector>
-#include "hashutil.c"
+#include "hashutil.h"
 #include<unordered_map>
 
 using namespace std;
 
-class Graveyard_Hash{
+class Robinhoodtomb_Hash{
     vector<uint64_t> keys ;
     vector<uint64_t> values;
     uint64_t st;
-    unordered_map<int,int> umap;
     int tot=0;
     size_t  n;
     int k =0 ;
     //tombstones are uint64_max;
     public:
-    Graveyard_Hash(){
-        n= 100;
+    Robinhoodtomb_Hash(size_t tn){
+        n= tn;
         st = 0 ;
         keys.resize(n);
         values.resize(n);
     }
     bool query_(uint64_t x){
-        
+        uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
+        int i;
+        if(hashval < st){
+            i = st; 
+        }
+        else
+            i= hashval;
+        do{
+            int temp =  MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
+            if(keys[i] == x)return 1;
+            else if(keys[i] == 0 ){return 0;
+            }
+            else if(keys[i] == UINT64_MAX){
+                i++;
+                i= i%n;
+            }
+            else if(temp > hashval ){
+                return 0;
+            }
+            else{
+                i++;
+                i= i%n;
+            }
+        }while(i!=st);
+        return 0;
+
     }
-    bool insert_(uint64_t x, int id){
-        umap[x]= id;
-       uint64_t hashval = id; //MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
-      // cout<<"hashval"<<hashval<<endl;
-       int ind;
-       bool b=0;
-       if(st > hashval ){
-            int j = st;
-            int ind;
-            bool b=0;
-            while(j != n){
-                uint64_t temp  = umap[keys[j]];//MurmurHash64A(&keys[j], sizeof(uint64_t), 0);
-                if(keys[j] == 0 && keys[j]==UINT64_MAX){
-                    
-                    if(b == 1){
-                        for(int k= j ; k> ind;k-- ){
-                            keys[k]= keys[k-1];
-                        }
-                        keys[ind] = x;
-                        return ind;
-                    }
-                    if(keys[j] == 0){
-                        keys[j] = x;
-                        return j;
-                    }
-                    int k = j;
-                    while(k!=n){
-                        uint64_t temp  = umap[keys[k]];//MurmurHash64A(&keys[k], sizeof(uint64_t), 0);
-                        if(temp > hashval){
-                            break;
-                        }
-                        k++;
-                    } 
-                    if(k == n){
-                        int p= 0;
-                        while(p!=st){
-                            uint64_t temp  = umap[keys[p]];//MurmurHash64A(&keys[p], sizeof(uint64_t), 0);
-                            if(temp > hashval){
-                                break;
+    void insert_(uint64_t x){
+        uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
+        int ind;
+        bool b=0;
+        if(hashval>= st){
+            int i=hashval;
+            do{
+                int temp = MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
+                if(keys[i] == 0 || keys[i]==UINT64_MAX){
+                    if(keys[i] == 0){
+                        if(b){
+                            for(int k= i;k>ind;k=(k==0?n-1:k-1) ){
+                                keys[k] =keys[k-1];
                             }
-                            p++;
-                        }
-                        if(p == st){
-                            p--;
-                            for(int l =j  ; l<p;l++){
-                                l= l%n;
-                                keys[l] = keys[(l+1)%n];
-                            }
-                            keys[p] = x;
-                            return p ;
+                            keys[ind] =x;
+                            return ; 
                         }
                         else{
-                            p--;
-                            for(int l =j  ; l<p;l++){
-                                l= l%n;
-                                keys[l] = keys[(l+1)%n];
-                            }
-                            keys[p] = x;
-                            return p ;
+                            keys[i]= x;
+                            return ;
                         }
                     }
                     else{
-                        k--;
-                        for(int p =j ; p< k;p++){
-                            keys[p] = keys[p+1];
+                        if(b){
+                            for(int k= i;k>ind;k=(k==0?n-1:k-1) ){
+                                 keys[k] =keys[k-1];
+                            }
+                            keys[ind] =x;
+                            return ; 
                         }
-                        keys[k] = x;
-                        return k;
+                        else{
+                            int j= i;
+                            do{
+                                int temp2= MurmurHash64A(&keys[j], sizeof(uint64_t), 0)%n;
+                                if(keys[j]==UINT64_MAX){j++;j=j%n;continue;}
+                                else if(keys[j]== 0){break;}
+                                else if(b==0 && temp2 > hashval){
+                                    
+                                    break;
+                                }
+                                j++;
+                                j= j%n;
+                            }while(j!=st);
+                            
+                                if(j==0)
+                                    j=n-1;
+                                else
+                                    j--;
+
+                                for(int k = i;k!= j;k=(k+1)%n ){
+                                  //  k= k%n;
+                                    keys[k]= keys[(k+1)%n];
+                                }
+                                keys[j]=x;
+                                return ;
+                            
+                        }
+                    }
+                }
+                else if(b==0 && temp >  hashval ){
+                    ind= i;
+                    b=1;
+                }
+                else{
+                }
+                i++;
+                i= i%n;
+            }while(i!= st);
+
+            for(int i=st;i!=hashval;i++){
+                i= i%n;
+                if(keys[i]== 0 || keys[i]==UINT64_MAX){
+                    int k=i;
+                    while(k>st){
+                        int t= (k==0 ? n-1:k-1);
+                        keys[k]= keys[t];
+                        if(k==0)
+                            k=n-1;
+                        else k--;
                     }
                     break;
                 }
-                else if(b==0 && hashval < temp){
-                    ind = j;
-                    b=1;
-                    j++;
-                }
-                else{
-                    j++;
-                }   
             }
-            j = 0;
-            if(b==0){
-                while(j!=st){
-                    uint64_t temp  = umap[keys[j]];//MurmurHash64A(&keys[j], sizeof(uint64_t), 0);
-                    if(keys[j] == 0 && keys[j]==UINT64_MAX){
-                        
-                        if(b == 1){
-                            for(int k= j ; k> ind;k-- ){
-                                keys[k]= keys[k-1];
-                            }
-                            keys[ind] = x;
-                            return ind;
-                        }
-                        if(keys[j] == 0){
-                            keys[j] = x;
-                            return j;
-                        }
-                        int k = j;
-                        while(k!=st){
-                            uint64_t temp  = umap[keys[k]];//MurmurHash64A(&keys[k], sizeof(uint64_t), 0);
-                            if(temp > hashval){
-                                break;
-                            }
-                            k++;
-                        } 
-                        if(k == n){
-
-                        }
-                        else{
-                            k--;
-                            for(int p =j ; p< k;p++){
-                                keys[p] = keys[p+1];
-                            }
-                            keys[k] = x;
-                            return k;
-                        }
-                        break;
-                    }
-                    else if(b==0 && hashval < temp){
-                        ind = j;
-                        b=1;
-                        j++;
-                    }
-                    else{
-                        j++;
-                    }
+            st= st+1;
+            st= st%n;
+            if(b){
+                int k= (st==0)?n-1:st-1;
+                while(k!=ind){
+                    int t= (k==0 ? n-1:k-1);
+                    keys[k]=  keys[t];
+                    if (k==0)k=n-1;
+                    else
+                    k--;
                 }
+                keys[ind]= x;
+                return ;
             }
             else{
-                int j = 0;
-                while(j!=st){
-                    if(keys[j] == 0 ||keys[j]==UINT64_MAX){
-                        
-                        for(int p = j;p!=ind;p--){
-                            if(p==0){
-                                keys[p]= keys[n-1];
-                            }
-                            else{
-                                keys[p]= keys[p-1];
-                            }
-                        }
-                        keys[ind]= x;
-                        return ind;
-                    }
-                    j++;
-                }   
+                keys[st-1] = x;
+                return;
             }
-       }
-       else{
-            // find free slot between hashval st
-            // if yes b==1 shift and add
-            //else back shift till found and add
-            // if no  then find free slot and shit start b==1 shift and add
-            // else put it at end
-            int j = hashval;
-            int ind;
-            bool b=0;
-            do {
-                uint64_t temp  =   umap[keys[j]]; //MurmurHash64A(&keys[j], sizeof(uint64_t), 0);
-
-                if(keys[j] == 0 || keys[j]==UINT64_MAX){
-                    if(keys[j] == 0){
-                        keys[j] = x;
-                        return j;
-                    }
-                    if(j >= st && j<hashval){
-                        for(int k=j;k>st;k--){
-                            keys[k]= keys[k-1];
-                            
-                        }
-                        st= st+1;
-                        if(b==1){
-                            for(int k=st-1;k>ind;k= (k-1)%n){
-                                keys[k]= keys[(k-1)%n];
+            cout<<"No FREE SLOTS";
+        }
+        else{
+            int i= st;
+            do{
+                int t2= MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;; 
+                if(keys[i] == 0|| keys[i]==UINT64_MAX){
+                    if(keys[i]==0){
+                        if(b){
+                            for(int k= i;k>ind;k= (k==0?n-1:k-1)){
+                                int tp= (k==0)?n-1:k-1;
+                                keys[k]= keys[tp];
                             }
                             keys[ind]= x;
-                            return ind;
+                            return ;
                         }
                         else{
-                            keys[st-1]= x;
-                            return st-1;
+                            keys[i]= x;
+                            return ;
                         }
                     }
                     else{
-                        if(b == 1){
-                            for(int k = j; k>ind;k= (k-1)%n){
-                                keys[k]= keys[(k-1)%n];
+                        if(b){
+                            for(int k= i;k>ind;k= (k==0?n-1:k-1)){
+                                int tp= (k==0)?n-1:k-1;
+                                keys[k]= keys[tp];
                             }
-                            keys[ind] = x;
-                            return ind;
+                            keys[ind]= x;
+                            return ;
                         }
                         else{
-                            int k;
-                            for( k= j;j<st;k++){
-                                uint64_t temp2  =umap[keys[k]];// MurmurHash64A(&keys[k], sizeof(uint64_t), 0);
-                                if(temp2 > hashval){break;}
+                            int j= i;
+                            do{
+                                int temp3= MurmurHash64A(&keys[j], sizeof(uint64_t), 0)%n;
+                                if(keys[j] == 0 ||keys[j]==UINT64_MAX){
+                                    j++;
+                                    j= j%n;
+                                    continue;}
+                                if(temp3 > hashval ){
+                                    break;
+                                }
+                                j++;
+                                j= j%n;
+                            }while(j!=st);
+                            if(j ==0){
+                                j=n-1;
                             }
-                            k--;
-                            for(int p=ind;p<k;p= (p+1)%n){
+                            else j--;
+                            for(int p= i;p!=j;p++){
+                                p=p%n;
                                 keys[p]= keys[(p+1)%n];
-
                             }
-                            keys[k]= x;
-                            return k;
+                            keys[j] = x;
+                            return ;
                         }
                     }
                 }
-                if(temp <= hashval){
-                    
-                }
-                else if(b==0 && temp> hashval && ((j>=hashval && j<n) || (j<st &&j>=0) )){
-                    ind= j;
+                else if( b==0 && t2 > hashval){
+                    ind= i;
                     b=1;
                 }
+                i++;
+                i= i%n;
+            }while(i!=st);
+        }
+    }
+
+    void delete_(uint64_t x){
+        uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
+     //   cout<<st<<" "<<hashval<<endl;
+        int i;
+        if(hashval < st){
+            i = st; 
+        }
+        else
+            i= hashval;
+        do{
+            int temp =  MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
+            if(keys[i] == x){keys[i]=UINT64_MAX;return ;}
+            else if(keys[i] == 0 ){return ;
+            }
+            else if(keys[i] == UINT64_MAX){
+                i++;
+                i= i%n;
+            }
+            else if(temp > hashval ){
+                return ;
+            }
+            else{
+                i++;
+                i= i%n;
+            }
+        }while(i!=st);
+        return ;
+    }
+
+    void resize_(){
+        vector<uint64_t> v(n);
+        
+        
+        int j = st;
+        for(int i=0 ; i<n ; i++){
+            int t = MurmurHash64A( &keys[j], sizeof(uint64_t),0)%n;
+            if(keys[j] == 0 || keys[j] == UINT64_MAX){
+                j++;
+                i--;
+                j= j%n;
+                continue;
+            }
+            if(i < t){
+                i= t;
+                if(v[i]==UINT64_MAX)continue;
+                v[i] = keys[j]; 
                 j++;
                 j= j%n;
-            }while(j!=hashval);
-
-
-       }
-       return UINT64_MAX;
-    }
-    void delete_(uint64_t x){
+                continue;
+            }
+            if(v[i]==UINT64_MAX)continue;
+            v[i]= keys[j];
+            j++;
+            j= j%n;
+        }
+        int left=0;
+        if(j==0)j= n-1;
+        else
+        j--;
+        int h=j;
+        while(h!=st){
+            if(keys[h] == 0 || keys[h] == UINT64_MAX){
+                h++;
+                h= h%n;
+                continue;
+            }    
+            left++;
+            h++;
+            h= h%n;
+        }
         
+       // cout<<" left"<<left<<"j"<<j<<endl;
+        if(left == 0){
+            for(int i=0;i<n;i++){
+                keys[i]= v[i];
+            }
+          return ;  
+        }
+        int k= 0;
+        while(left!=0){
+            if(v[k]==0){
+                left--;
+            }
+            k++;
+        }
+        k--;
+        // cout<<"k"<<k<<"  "<<endl;
+
+        // for(int p=0;p<n;p++){
+        //     cout<<v[p]<<"  ";
+        // }
+        // cout<<endl;
+        // for(int p=0;p<n;p++){
+        //     cout<<keys[p]<<" == "<<(MurmurHash64A(&keys[p], sizeof(uint64_t), 0)%n)<<endl;
+        // }
+        // cout<<endl;
+        int tempst;
+        int i= k;
+        while(1){
+            if(v[i]==0 || v[i]== UINT64_MAX){
+                if(i==0)break;
+                i--;
+            }
+            else{
+                if(v[k]==UINT64_MAX){
+                    k--;
+                    continue;
+                }
+                v[k]= v[i];
+                
+                tempst = k;
+                k--;
+                if(i==0)break;
+                i--;
+                
+            } 
+        }
+
+         i=0;
+         while(j!=st){
+            if(v[i] == UINT64_MAX){
+                i++;
+                continue;
+            }
+            else{
+                if(keys[j]==0|| keys[j]==UINT64_MAX){
+                    j++;
+                    j= j%n;
+                    continue;
+                }
+                v[i]= keys[j];
+                j++;
+                j= j%n;
+                i++;
+
+            }
+        }
+        for(int i=0;i<n;i++){
+            keys[i]= v[i];
+        }
+        st = tempst;
+        //cout<<"fnst"<<st;
     }
     void print(){
         cout<<tot<<" total "<<endl;
