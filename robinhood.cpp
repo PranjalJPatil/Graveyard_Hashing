@@ -52,8 +52,13 @@ class Robinhood_Hash{
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
-                            for(int k= i;k>ind;k=(k==0?n-1:k-1) ){
-                                keys[k] =keys[k-1];
+                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
+                                
+                                int t=k-1;;
+                                 if(k==0){
+                                    t=n-1;
+                                 }
+                                keys[k] =keys[t];
                             }
                             keys[ind] =x;
                             return ; 
@@ -65,8 +70,12 @@ class Robinhood_Hash{
                     }
                     else{
                         if(b){
-                            for(int k= i;k>ind;k=(k==0?n-1:k-1) ){
-                                 keys[k] =keys[k-1];
+                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
+                                 int t=k-1;;
+                                 if(k==0){
+                                    t=n-1;
+                                 }
+                                 keys[k] =keys[t];
                             }
                             keys[ind] =x;
                             return ; 
@@ -151,7 +160,7 @@ class Robinhood_Hash{
                 if(keys[i] == 0|| keys[i]==UINT64_MAX){
                     if(keys[i]==0){
                         if(b){
-                            for(int k= i;k>ind;k= (k==0?n-1:k-1)){
+                            for(int k= i;k!=ind;k= (k==0?n-1:k-1)){
                                 int tp= (k==0)?n-1:k-1;
                                 keys[k]= keys[tp];
                             }
@@ -165,7 +174,7 @@ class Robinhood_Hash{
                     }
                     else{
                         if(b){
-                            for(int k= i;k>ind;k= (k==0?n-1:k-1)){
+                            for(int k= i;k!=ind;k= (k==0?n-1:k-1)){
                                 int tp= (k==0)?n-1:k-1;
                                 keys[k]= keys[tp];
                             }

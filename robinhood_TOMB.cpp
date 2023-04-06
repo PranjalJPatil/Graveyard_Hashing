@@ -59,8 +59,13 @@ class Robinhoodtomb_Hash{
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
-                            for(int k= i;k>ind;k=(k==0?n-1:k-1) ){
-                                keys[k] =keys[k-1];
+                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
+                                
+                                int t=k-1;;
+                                 if(k==0){
+                                    t=n-1;
+                                 }
+                                keys[k] =keys[t];
                             }
                             keys[ind] =x;
                             return ; 
@@ -72,8 +77,12 @@ class Robinhoodtomb_Hash{
                     }
                     else{
                         if(b){
-                            for(int k= i;k>ind;k=(k==0?n-1:k-1) ){
-                                 keys[k] =keys[k-1];
+                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
+                                 int t=k-1;;
+                                 if(k==0){
+                                    t=n-1;
+                                 }
+                                 keys[k] =keys[t];
                             }
                             keys[ind] =x;
                             return ; 
@@ -158,7 +167,7 @@ class Robinhoodtomb_Hash{
                 if(keys[i] == 0|| keys[i]==UINT64_MAX){
                     if(keys[i]==0){
                         if(b){
-                            for(int k= i;k>ind;k= (k==0?n-1:k-1)){
+                            for(int k= i;k!=ind;k= (k==0?n-1:k-1)){
                                 int tp= (k==0)?n-1:k-1;
                                 keys[k]= keys[tp];
                             }
@@ -172,7 +181,7 @@ class Robinhoodtomb_Hash{
                     }
                     else{
                         if(b){
-                            for(int k= i;k>ind;k= (k==0?n-1:k-1)){
+                            for(int k= i;k!=ind;k= (k==0?n-1:k-1)){
                                 int tp= (k==0)?n-1:k-1;
                                 keys[k]= keys[tp];
                             }
@@ -215,7 +224,6 @@ class Robinhoodtomb_Hash{
             }while(i!=st);
         }
     }
-
     void delete_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
      //   cout<<st<<" "<<hashval<<endl;
