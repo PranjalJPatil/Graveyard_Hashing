@@ -1,4 +1,4 @@
-#include "hashutil.h"
+#include "hashutil.c"
 #include <iostream>
 #include <vector>
 #include <math.h>
