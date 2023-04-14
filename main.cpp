@@ -16,8 +16,8 @@ double elapsed(high_resolution_clock::time_point t1, high_resolution_clock::time
 	return (duration_cast<duration<double>>(t2 - t1)).count();
 }
 int main(){
-     ofstream myFile;
-     myFile.open("test_80lf.csv");
+    ofstream myFile;
+    myFile.open("test_80lf.csv");
     myFile<<"Iterations"<<","<<"D-RH"<<","<<"D-RHT"<<","<<"D-GH"<<","<<"I-RH"<<","<<"D-RHT"<<","<<"D-GH"<<",Q-RH"<<",Q-RHT"<<",Q-GH"<<endl;
 
     high_resolution_clock::time_point t1, t2;
