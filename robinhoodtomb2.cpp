@@ -1,27 +1,29 @@
 #include<iostream>
 #include<vector>
 #include "hashutil.h"
+#include<unordered_map>
 
 using namespace std;
 
-class Robinhood_Hash{
+class Robinhoodtomb_Hash{
     vector<uint64_t> keys ;
-    //vector<uint64_t> values;
+   // vector<uint64_t> values;
     vector<uint64_t> hv;
-    uint64_t hvt;
-    size_t n;
-    int st;
+    uint64_t hvt ;
+    uint64_t st;
+    int tot=0;
+    size_t  n;
+    int k =0 ;
     //tombstones are uint64_max;
     public:
-    Robinhood_Hash(size_t tn){
-         n= tn;
+    Robinhoodtomb_Hash(size_t tn){
+        n= tn;
         st = 0 ;
         keys.resize(n);
-        //values.resize(n);
-        n= tn;
         hv.resize(n);
-      
-        st=0;
+      //  values.resize(n);
+        uint64_t c= UINT64_MAX;
+        hvt= MurmurHash64A(&c, sizeof(uint64_t), 0)%n;
     }
     bool query_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
@@ -32,34 +34,45 @@ class Robinhood_Hash{
         else
             i= hashval;
         do{
-            int temp = hv[i];
+            int temp =  hv[i];
             if(keys[i] == x)return 1;
             else if(keys[i] == 0 ){return 0;
+            }
+            else if(keys[i] == UINT64_MAX){
+                i++;
+                if(i==n)i=0;
             }
             else if(temp > hashval ){
                 return 0;
             }
             else{
                 i++;
-                i= i%n;
+                if(i==n)i=0;
             }
         }while(i!=st);
         return 0;
+
     }
     void insert_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
-        uint64_t ind;
+        int ind;
         bool b=0;
         if(hashval>= st){
-            uint64_t i=hashval;
-            uint64_t tp, tpv;
+            int i=hashval;
             do{
-                uint64_t temp = hv[i];
+                int temp = hv[i];
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
-                            keys[i] = tp;
-                            hv[i]=  tpv;
+                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
+                                
+                                int t=k-1;;
+                                 if(k==0){
+                                    t=n-1;
+                                 }
+                                keys[k] =keys[t];
+                                hv[k]= hv[t];
+                            }
                             keys[ind] =x;
                             hv[ind]= hashval;
                             return ; 
@@ -72,27 +85,26 @@ class Robinhood_Hash{
                     }
                     else{
                         if(b){
-                            keys[i] = tp;
-                            hv[i] = tpv;
+                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
+                                 int t=k-1;;
+                                 if(k==0){
+                                    t=n-1;
+                                 }
+                                 keys[k] =keys[t];
+                                 hv[k]= hv[t];
+                            }
                             keys[ind] =x;
                             hv[ind]= hashval;
                             return ; 
                         }
                         else{
-                            uint64_t j= i;
+                            int j= i;
                             do{
-                                uint64_t temp2= hv[j];
-                                if(keys[j]==UINT64_MAX){
-                                    keys[j] = keys[(j+1)%n];
-                                    hv[j]= hv[(j+1)%n];
-                                    j++;j=j%n;continue;}
+                                int temp2= hv[j];
+                                if(keys[j]==UINT64_MAX){j++;j=j%n;continue;}
                                 else if(keys[j]== 0){break;}
                                 else if(b==0 && temp2 > hashval){
                                     break;
-                                }
-                                else{
-                                    keys[j] = keys[(j+1)%n];
-                                    hv[j]= hv[(j+1)%n];
                                 }
                                 j++;
                                 if(j==n)j=0;
@@ -102,7 +114,13 @@ class Robinhood_Hash{
                                     j=n-1;
                                 else
                                     j--;
-                                
+
+                                for(int k = i;k!= j;k=(k+1)%n ){
+                                   int temp= (k+1);
+                                   if(temp== n)temp=0;
+                                    keys[k]= keys[temp];
+                                    hv[k] =  hv[(temp)];
+                                }
                                 keys[j]=x;
                                 hv[j] = hashval;
                                 return ;
@@ -113,58 +131,56 @@ class Robinhood_Hash{
                 else if(b==0 && temp >  hashval ){
                     ind= i;
                     b=1;
-                    tp= keys[i];
-                    tpv= temp;
                 }
-                else if(b==1){
-                    uint64_t to= keys[i], tov= temp;
-                    keys[i]= tp;
-                    hv[i] = tpv;
-                    tp= to;
-                    tpv= tov;
+                else{
                 }
-                
                 i++;
                 if(i==n) i=0;
             }while(i!= st);
-            uint64_t kp= keys[st], kpv= hv[st];
+
             for(int i=st;i!=hashval;i++){
                 if(i==n)i=0;
                 if(keys[i]== 0 || keys[i]==UINT64_MAX){
-                    keys[i]=  kp;
-                    hv[i]= kpv;
+                    int k=i;
+                    while(k>st){
+                        int t= (k==0 ? n-1:k-1);
+                        keys[k]= keys[t];
+                        hv[k]= hv[t];
+                        if(k==0)
+                            k=n-1;
+                        else k--;
+                    }
                     break;
-                }
-                else{
-                    uint64_t y= keys[i], yv= hv[i];
-                    keys[i] = kp;
-                    hv[i] = kpv;
-                    kp= y;
-                    kpv= yv;
                 }
             }
             st= st+1;
             st= st%n;
-            uint64_t end= (st==0)?n-1:st-1;
             if(b){
-                keys[end] = tp;
-                hv[end]= tpv;
+                int k= (st==0)?n-1:st-1;
+                while(k!=ind){
+                    int t= (k==0 ? n-1:k-1);
+                    keys[k]=  keys[t];
+                    hv[k] = hv[t];
+                    if (k==0)k=n-1;
+                    else
+                    k--;
+                }
                 keys[ind]= x;
                 hv[ind] = hashval;
                 return ;
             }
             else{
-                keys[end] = x;
-                hv[end] = hashval;
+                keys[st-1] = x;
+                hv[st-1] = hashval;
                 return;
             }
             cout<<"No FREE SLOTS";
         }
         else{
-            uint64_t i= st;
-            uint64_t temp, tempv;
+            int i= st;
+            int temp, tempv;
             do{
-                uint64_t t2= hv[i];
+                int t2= hv[i];
                 if(keys[i] == 0|| keys[i]==UINT64_MAX){
                     if(keys[i]==0){
                         if(b){
@@ -189,9 +205,9 @@ class Robinhood_Hash{
                             return ;
                         }
                         else{
-                            uint64_t j= i;
+                            int j= i;
                             do{
-                                uint64_t temp3= hv[j];
+                                int temp3= hv[j];
                                 if(keys[j] == 0 ||keys[j]==UINT64_MAX){
                                     if(keys[j] == 0)break;
                                     keys[j] = keys[(j+1)%n];
@@ -228,7 +244,7 @@ class Robinhood_Hash{
                     tempv = t2;
                 }
                 else if(b==1){
-                    uint64_t to= keys[i], tov= hv[i];
+                    int to= keys[i], tov= hv[i];
                     keys[i] = temp;
                     hv[i]= tempv;
                     temp=  to;
@@ -249,47 +265,146 @@ class Robinhood_Hash{
             i= hashval;
         do{
             int temp =  hv[i];
-            if(keys[i] == x){
-                int j = (i+1)%n;
-                do{
-                    int t2 =  hv[j];
-                    if(t2 == j){
-                        int p = j==0? n-1:j-1;
-                        keys[p]= 0;
-                        hv[p] = 0;
-                        break;
-                    }
-                    int p = j==0? n-1:j-1;
-                    keys[p]= keys[j];
-                    hv[p] = hv[j];
-                    keys[j]=0;
-                    hv[j] = 0;
-                    j++;
-                    j= j%n;
-                }while(j!=st);
-                return ;
-            }
+            if(keys[i] == x){keys[i]=UINT64_MAX;
+            hv[i] = hvt;
+            return ;}
             else if(keys[i] == 0 ){return ;
+            }
+            else if(keys[i] == UINT64_MAX){
+                i++;
+                if(i==n)i=0;
             }
             else if(temp > hashval ){
                 return ;
             }
             else{
                 i++;
-                i= i%n;
+                if(i==n)i=0;
             }
         }while(i!=st);
         return ;
     }
+
+    void resize_(){
+        vector<uint64_t> v(n);
+        vector<uint64_t> vhv(n);
+        
+        int j = st;
+        for(int i=0 ; i<n ; i++){
+            int t = hv[j];
+            if(keys[j] == 0 || keys[j] == UINT64_MAX){
+                j++;
+                i--;
+                if(j==n)j=0;
+                continue;
+            }
+            if(i < t){
+                i= t;
+                if(v[i]==UINT64_MAX)continue;
+                v[i] = keys[j]; 
+                vhv[i]= hv[j];
+                j++;
+                if(j==n)j=0;
+                continue;
+            }
+            if(v[i]==UINT64_MAX)continue;
+            v[i]= keys[j];
+            vhv[i]= hv[j];
+            j++;
+            if(j==n)j=0;
+        }
+        int left=0;
+        if(j==0)j= n-1;
+        else
+        j--;
+        int h=j;
+        while(h!=st){
+            if(keys[h] == 0 || keys[h] == UINT64_MAX){
+                h++;
+                h= h%n;
+                continue;
+            }    
+            left++;
+            h++;
+            if(h==n) h=0;
+        }
+        
+       // cout<<" left"<<left<<"j"<<j<<endl;
+        if(left == 0){
+            for(int i=0;i<n;i++){
+                keys[i]= v[i];
+                hv[i]= vhv[i];
+            }
+          return ;  
+        }
+        int k= 0;
+        while(left!=0){
+            if(v[k]==0){
+                left--;
+            }
+            k++;
+        }
+        k--;
+        
+        int tempst;
+        int i= k;
+        while(1){
+            if(v[i]==0 || v[i]== UINT64_MAX){
+                if(i==0)break;
+                i--;
+            }
+            else{
+                if(v[k]==UINT64_MAX){
+                    k--;
+                    continue;
+                }
+                v[k]= v[i];
+                vhv[k]= vhv[i];
+                tempst = k;
+                k--;
+                if(i==0)break;
+                i--;
+                
+            } 
+        }
+
+         i=0;
+         while(j!=st){
+            if(v[i] == UINT64_MAX){
+                i++;
+                continue;
+            }
+            else{
+                if(keys[j]==0|| keys[j]==UINT64_MAX){
+                    j++;
+                    if(j==n)j=0;
+                    continue;
+                }
+                v[i]= keys[j];
+                vhv[i]= hv[j];
+                j++;
+                if(j==n)j=0;
+                i++;
+
+            }
+        }
+        for(int i=0;i<n;i++){
+            keys[i]= v[i];
+            hv[i]= vhv[i];
+        }
+        st = tempst;
+        //cout<<"fnst"<<st;
+    }
     void print(){
-     //   cout<<tot<<" total "<<endl;
+        cout<<tot<<" total "<<endl;
         for(int i=0;i<100;i++){
-            cout<<i << " == "<<keys[i]<<"        ";
+            cout<<i<<"==="<<keys[i]<<"   ";
         }
     }
     void print2(){
-    //    cout<<tot<<" total "<<endl;
+        cout<<st<<" total "<<endl;
         for(int i=0;i<100;i++){
+            if(keys[i]==0)continue;
             cout<<MurmurHash64A(&keys[i],sizeof(uint64_t),0)%n<<"        ";
         }
     } 

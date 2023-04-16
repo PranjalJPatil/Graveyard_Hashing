@@ -10,29 +10,38 @@
 
 
 int main(){
-    Graveyard_Hash *ob = new Graveyard_Hash(1000);
-    for(int i=1;i<=900;i++){
+    Robinhoodtomb_Hash *ob = new Robinhoodtomb_Hash(10000);
+    
+    
+
+    for(int i=1;i<=9000;i++){
         ob->insert_(i);
     }
-    int st= 901;
+    int st= 9001;
     int del= 1;
     for(int i=0;i<100;i++){
-        for(int j=del;j<del+50;j++){
+        cout<<i<<" ";
+       
+        for(int j=del;j<del+500;j++){
+            
             ob->delete_(j);
         }
-        del= del+50;
-        for(int j=st;j<st+50;j++){
-            if(j==1869){
-                ob->insert_(j);
-            }else
+       
+        del= del+500;
+
+        for(int j=st;j<st+500;j++){
             ob->insert_(j);
         }
-        for(int j=st;j<st+50;j++){
+      
+        for(int j=del;j<st+500;j++){
             if(ob->query_(j)){
-
             }else cout<<j<<"wrong"<<endl;
         }
-        st= st+50;
+        st= st+500;
+   
+        ob->resize_();
+        
+       //ob->print();
 
     }
 
