@@ -55,10 +55,14 @@ struct CuckooHash{
 
         long insert_val = x;
 
-        long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
-        long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
+        // long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
+        // long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
 
         for(int i = 0; i < numOfMaxLoop;i++){
+
+            long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
+            long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
+
             if(!hashTables[0][table1HashIndex]){
                 hashTables[0][table1HashIndex] = insert_val;
                 return;
@@ -117,13 +121,50 @@ struct CuckooHash{
             }
         }
 
-
-
-        
-
         tableSize = newSize;
         delete[] hashTables;
         hashTables = newHashTables;
 
+    }
+
+    void deleteItem(long x, long numOfMaxLoop){
+
+        long delete_val = x;
+
+
+        for(int i = 0; i < numOfMaxLoop;i++){
+
+               for(int i = 0; i < numOfMaxLoop;i++){
+                    long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
+                    long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
+
+                    if(hashTables[0][table1HashIndex]){
+                        hashTables[0][table1HashIndex] = NULL;
+                        return;
+                    }
+
+                    long oldItemInTable1 = hashTables[0][table1HashIndex];
+                    hashTables[0][table1HashIndex] = delete_val;
+                    delete_val = oldItemInTable1;
+
+
+
+                    if(hashTables[1][table2HashIndex]){
+                        hashTables[1][table2HashIndex] = NULL;
+                        return;
+                    }
+
+
+                    long oldItemInTable2 = hashTables[0][table2HashIndex];
+                    hashTables[0][table2HashIndex] = delete_val;
+                    delete_val = oldItemInTable2;
+
+                    //// Swapping
+                    rehash();
+                    // insert(x,numOfMaxLoop);
+        }
+               
+
+        }
     }
 };

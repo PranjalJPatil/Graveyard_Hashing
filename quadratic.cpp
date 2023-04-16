@@ -28,7 +28,7 @@ struct QuadraticHash{
 
         for(int i = 0; i < maxIterations; i++){
 
-            if(hashTable[hashIndex]==0){
+            if(!hashTable[hashIndex]){
                 return;
             }
 
@@ -49,7 +49,7 @@ struct QuadraticHash{
         for(int i = 0; i < maxIterations; i++){
             // long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize; 
 
-            if(hashTable[hashIndex]==0){
+            if(!hashTable[hashIndex]){
                 return false;
             }else{
                 if(hashTable[hashIndex]==x){
@@ -79,6 +79,23 @@ struct QuadraticHash{
         tableSize = newSize;
         delete[] hashTable;
         hashTable = newHashTable;
+    }
+
+
+    void deleteItem(long x){
+        long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize;
+
+        for(int i = 0; i < maxIterations; i++){
+
+            if(hashTable[hashIndex]){
+                return;
+            }
+            
+            long newIndex = (long) (hashIndex + pow((i+1),2)) % tableSize;
+            hashIndex = newIndex;
+
+            // hashIndex = (hashIndex + pow((i+1),2)) % tableSize;
+        }
     }
 
 
