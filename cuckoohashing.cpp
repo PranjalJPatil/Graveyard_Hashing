@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <cmath>
 
 using namespace std;
 
@@ -18,15 +19,17 @@ struct CuckooHash{
     long table1Seed;
     long table2Seed;
     long hastTableSize;
+    double loadFactor;
     // long* hashTables2;
 
-    CuckooHash(long size, long initTable1HashLength, long initTable2HashLength, long initTable1Seed, long initTable2Seed){
+    CuckooHash(long size, double initLoadFactor, long initTable1HashLength, long initTable2HashLength, long initTable1Seed, long initTable2Seed){
         hashTables = new long*[2];
 
         for(int i = 0; i < 2;i++){
             hashTables[i] = new long[size];
         }
 
+        loadFactor = initLoadFactor;
         tableSize = size;
         // table1HashLength = initTable1HashLength;
         table1Seed = initTable1Seed;
@@ -35,6 +38,11 @@ struct CuckooHash{
     }
 
     void insert(long x, long numOfMaxLoop){
+        if(tableSize >= tableSize * loadFactor){
+            long factor = 2;
+            resize(factor);
+        }
+
         bool foundItem = false;
 
         // while(!foundItem){
@@ -84,10 +92,38 @@ struct CuckooHash{
         table2Seed = pow(table2Seed,2);
     }
 
+
     bool lookup(long x){
         long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
         long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
 
         return hashTables[0][table1HashIndex] == x || hashTables[1][table2HashIndex] == x;
+    }
+
+    void resize(long factor){
+        long newSize = tableSize * factor;
+        long** newHashTables = new long*[2];
+
+        for(int i = 0; i < 2;i++){
+            newHashTables[i] = new long[newSize];
+        }
+        
+
+        for(int i = 0; i < 2;i++){
+            for(int j = 0; j < tableSize;j++){
+                if(hashTables[i][j]){
+                    newHashTables[i][j] = hashTables[i][j];
+                }
+            }
+        }
+
+
+
+        
+
+        tableSize = newSize;
+        delete[] hashTables;
+        hashTables = newHashTables;
+
     }
 };
