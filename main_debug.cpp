@@ -4,9 +4,10 @@ int main(){
 
     long size = 10;
     double loadFactor = 0.5;
+    double enLargeFactor = 2.0;
     long seed = 20;
-    long maxIterations = 1;
-    QuadraticHash qh(size,loadFactor,seed,maxIterations);
+    long maxIterations = 4;
+    QuadraticHash qh(size,loadFactor, enLargeFactor,seed,maxIterations);
 
     qh.insert(5);
     qh.insert(10);
