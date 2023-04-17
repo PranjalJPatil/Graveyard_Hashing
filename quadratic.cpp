@@ -16,6 +16,7 @@ struct QuadraticHash{
     double loadFactor;
     long numberOfElements;
     double enlargeFactor;
+    long maxCollisions;
     // vector<long>* hashTablePtr;
 
     //// Hashing with Qudratic Probing
@@ -28,6 +29,7 @@ struct QuadraticHash{
         maxIterations = initMaxIterations;
         numberOfElements = 0;
         enlargeFactor = initEnlargeFactor;
+        maxCollisions = 0;
 
     
     }
@@ -40,11 +42,18 @@ struct QuadraticHash{
         cout << "The Inserting of Item: " << x << " has hashIndex of: " << hashIndex << endl; 
 
         int counter = 0;
+        int numOfCollisions = 0;
 
         while(hashTable[hashIndex]){
             long newIndex = (long) (hashIndex + pow((counter+1),2)) % tableBaseSize;
             hashIndex = newIndex;
             counter++;
+
+            numOfCollisions++;
+
+            if(numOfCollisions > maxCollisions){
+                maxCollisions = numOfCollisions;
+            }
         }
 
         hashTable[hashIndex] = x;
@@ -57,8 +66,6 @@ struct QuadraticHash{
     }
 
     bool lookup(long x){
-        // bool foundItem = false;
-
         long hashIndex = MurmurHash64A(&x,tableBaseSize,tableSeed) % tableBaseSize; 
 
         long counter = 0;
@@ -73,13 +80,6 @@ struct QuadraticHash{
             hashIndex = newIndex;
             // counter++;
         }
-
-        // hashTable[hashIndex] = x;
-        // numberOfElements++;
-
-        // if(numberOfElements >= (long)(loadFactor * tableSize)){
-        //     resize(enlargeFactor);
-        // }
 
         return false;
 
@@ -99,24 +99,30 @@ struct QuadraticHash{
         delete[] hashTable;
         hashTable = newHashTable;
 
-        print();
+        // print();
     }
-
 
     void deleteItem(long x){
         long hashIndex = MurmurHash64A(&x,tableBaseSize,tableSeed) % tableBaseSize;
-        for(int i = 0; i < maxIterations; i++){
 
-            if(hashTable[hashIndex]){
-                if(hashTable[hashIndex]==x){
-                    hashTable[hashIndex] = 0;
-                    return;
-                }
+        int counter = 0;
+        int numOfCollisions = 0;
+
+        while(hashTable[hashIndex]){
+            if(numOfCollisions >  maxCollisions){
+                break;
             }
-            
-            long newIndex = (long) (hashIndex + pow((i+1),2)) % tableBaseSize;
+
+            if(hashTable[hashIndex]==x){
+                hashTable[hashIndex] = 0;
+            }
+
+            long newIndex = (long) (hashIndex + pow((counter+1),2)) % tableBaseSize;
             hashIndex = newIndex;
+            counter++;
+            numOfCollisions++;
         }
+
     }
 
     void print(){

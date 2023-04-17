@@ -129,7 +129,6 @@ struct CuckooHash{
 
         long delete_val = x;
 
-
         for(int i = 0; i < numOfMaxLoop;i++){
 
                for(int i = 0; i < numOfMaxLoop;i++){
@@ -145,8 +144,6 @@ struct CuckooHash{
                     hashTables[0][table1HashIndex] = delete_val;
                     delete_val = oldItemInTable1;
 
-
-
                     if(hashTables[1][table2HashIndex]){
                         hashTables[1][table2HashIndex] = NULL;
                         return;
@@ -161,7 +158,6 @@ struct CuckooHash{
                     rehash();
                     // insert(x,numOfMaxLoop);
         }
-               
 
         }
     }

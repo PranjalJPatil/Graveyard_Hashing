@@ -40,5 +40,10 @@ int main(){
     result = qh.lookup(100);
     cout << "The result is: " << result << endl;
 
+
+    qh.deleteItem(5);
+    qh.print();
+
+
     return 0;
 }
