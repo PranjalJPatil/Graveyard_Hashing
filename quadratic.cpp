@@ -13,6 +13,7 @@ struct QuadraticHash{
     long tableSeed;
     long maxIterations;
     double loadFactor;
+    // vector<long>* hashTablePtr;
 
     //// Hashing with Qudratic Probing
     QuadraticHash(long initSize, double initLoadFactor, long initSeed, long initMaxIterations){
@@ -21,30 +22,37 @@ struct QuadraticHash{
         tableSize = initSize;
         tableSeed = initSeed;
         maxIterations = initMaxIterations;
+        // hashTablesPtr = new vector<long>[2];
+
+    
     }
 
     void insert(long x){
         long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize;
 
-        for(int i = 0; i < maxIterations; i++){
+        cout << "The Inserting of Item: " << x << " has hashIndex of: " << hashIndex << endl; 
 
+        for(int i = 0; i < maxIterations; i++){
             if(!hashTable[hashIndex]){
+                hashTable[hashIndex] = x;
                 return;
             }
+
+            
 
             long newIndex = (long) (hashIndex + pow((i+1),2)) % tableSize;
             hashIndex = newIndex;
 
             // hashIndex = (hashIndex + pow((i+1),2)) % tableSize;
         }
-
     }
-
 
     bool lookup(long x){
         // bool foundItem = false;
 
         long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize; 
+
+        cout << "The Lookup of Item: " << x << " has hashIndex of: " << hashIndex << endl; 
 
         for(int i = 0; i < maxIterations; i++){
             // long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize; 
@@ -84,17 +92,17 @@ struct QuadraticHash{
 
     void deleteItem(long x){
         long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize;
-
         for(int i = 0; i < maxIterations; i++){
 
             if(hashTable[hashIndex]){
-                return;
+                if(hashTable[hashIndex]==x){
+                    hashTable[hashIndex] = 0;
+                    return;
+                }
             }
             
             long newIndex = (long) (hashIndex + pow((i+1),2)) % tableSize;
             hashIndex = newIndex;
-
-            // hashIndex = (hashIndex + pow((i+1),2)) % tableSize;
         }
     }
 

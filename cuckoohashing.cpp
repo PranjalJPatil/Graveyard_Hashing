@@ -12,6 +12,7 @@ using namespace std;
 //// Hashing
 struct CuckooHash{
     vector<int> newElements;
+    // vector<long>* hashTablesPtr;
     long** hashTables;
     long tableSize;
     long table1HashLength;
@@ -24,6 +25,7 @@ struct CuckooHash{
 
     CuckooHash(long size, double initLoadFactor, long initTable1HashLength, long initTable2HashLength, long initTable1Seed, long initTable2Seed){
         hashTables = new long*[2];
+        // hashTablesPtr = new vector<long>[2];
 
         for(int i = 0; i < 2;i++){
             hashTables[i] = new long[size];
@@ -44,10 +46,6 @@ struct CuckooHash{
         }
 
         bool foundItem = false;
-
-        // while(!foundItem){
-
-        // }
 
         if(lookup(x)){
             return;
