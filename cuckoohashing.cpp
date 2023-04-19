@@ -12,105 +12,134 @@ using namespace std;
 //// Hashing
 struct CuckooHash{
     vector<int> newElements;
-    // vector<long>* hashTablesPtr;
     long** hashTables;
     long tableSize;
     long table1HashLength;
     long table2HashLength;
     long table1Seed;
     long table2Seed;
-    long hastTableSize;
+    long baseSize;
+    long totalCapacity;
+    long numberOfElements;
+    double resizeFactor;
     double loadFactor;
-    // long* hashTables2;
+    long maxNumCollisions;
 
-    CuckooHash(long size, double initLoadFactor, long initTable1HashLength, long initTable2HashLength, long initTable1Seed, long initTable2Seed){
+    CuckooHash(long initSize, double initResizeFactor, double initLoadFactor, long initTable1HashLength, long initTable2HashLength, long initTable1Seed, long initTable2Seed){
         hashTables = new long*[2];
-        // hashTablesPtr = new vector<long>[2];
 
         for(int i = 0; i < 2;i++){
-            hashTables[i] = new long[size];
+            hashTables[i] = new long[tableSize];
         }
 
+        numberOfElements = 0;
         loadFactor = initLoadFactor;
-        tableSize = size;
-        // table1HashLength = initTable1HashLength;
+        tableSize = initSize;
+        totalCapacity = tableSize * 2;
+        baseSize = tableSize;
+        resizeFactor = initResizeFactor;
+        maxNumCollisions = 0;
+
         table1Seed = initTable1Seed;
-        // table2HashLength = initTable2HashLength;
         table2Seed = initTable2Seed;
     }
 
-    void insert(long x, long numOfMaxLoop){
-        if(tableSize >= tableSize * loadFactor){
-            long factor = 2;
-            resize(factor);
+    void insert(long x){
+        if(numberOfElements >= totalCapacity * loadFactor){
+            resize();
         }
 
         bool foundItem = false;
 
-        if(lookup(x)){
-            return;
-        }
+        // if(lookup(x)){
+        //     return;
+        // }
 
         long insert_val = x;
 
-        // long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
-        // long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
+        long table1HashIndex = MurmurHash64A(&x,baseSize,table1Seed) % tableSize;
+        long table2HashIndex = MurmurHash64A(&x,baseSize,table2Seed) % tableSize;
 
-        for(int i = 0; i < numOfMaxLoop;i++){
+        long numOfCollisions = 0;
+        long counter = 0;
 
-            long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
-            long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
-
+        while(true){
             if(!hashTables[0][table1HashIndex]){
                 hashTables[0][table1HashIndex] = insert_val;
-                return;
+                numberOfElements++;
+                break;
             }
-
-            long oldItemInTable1 = hashTables[0][table1HashIndex];
+            
+            long hashTable1Item = hashTables[0][table1HashIndex];
             hashTables[0][table1HashIndex] = insert_val;
-            insert_val = oldItemInTable1;
-
-
+            insert_val = hashTable1Item;
 
             if(!hashTables[1][table2HashIndex]){
-                hashTables[1][table2HashIndex] = insert_val;
-                return;
+                hashTables[0][table2HashIndex] = insert_val;
+                numberOfElements++;
+                break;
             }
 
-
-            long oldItemInTable2 = hashTables[0][table2HashIndex];
+            long hashTable2Item = hashTables[0][table2HashIndex];
             hashTables[0][table2HashIndex] = insert_val;
-            insert_val = oldItemInTable2;
+            insert_val = hashTable2Item;
 
-            //// Swapping
-            rehash();
-            // insert(x,numOfMaxLoop);
- 
+            table1HashIndex = (long)(table1HashIndex + pow((counter+1),2)) % tableSize; 
+            table2HashIndex = (long)(table2HashIndex + pow((counter+1),2)) % tableSize; 
+
+            counter++;
+            numOfCollisions++;
+
+            if(maxNumCollisions < numOfCollisions){
+                maxNumCollisions = numOfCollisions;
+            }
         }
     }
 
-    void rehash(){
-        table1Seed = pow(table1Seed,2);
-        table2Seed = pow(table2Seed,2);
-    }
-
-
     bool lookup(long x){
-        long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
-        long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
+        // long insert_val = x;
 
-        return hashTables[0][table1HashIndex] == x || hashTables[1][table2HashIndex] == x;
+        // long numOfCollisions = 0;
+
+        // long table1HashIndex = MurmurHash64A(&x,baseSize,table1Seed) % baseSize;
+        // long table2HashIndex = MurmurHash64A(&x,baseSize,table2Seed) % baseSize;
+
+        // cout << "The index of item " << x << " at hash table 1 is: " << table1HashIndex << endl;
+        // cout << "The index of item " << x << " at hash table 2 is: " << table2HashIndex << endl;
+
+        // long counter = 0;
+
+        // while(numOfCollisions < maxNumCollisions){
+        //     if(hashTables[0][table1HashIndex]){
+        //         if(hashTables[0][table1HashIndex]==x){
+        //             return true;
+        //         }
+        //     }
+            
+        //     if(hashTables[1][table2HashIndex]){
+        //         if(hashTables[0][table2HashIndex]==x){
+        //             return true;
+        //         }
+        //     }
+
+        //     table1HashIndex = (long)(table1HashIndex + pow((counter+1),2)) % baseSize; 
+        //     table2HashIndex = (long)(table2HashIndex + pow((counter+1),2)) % baseSize; 
+
+        //     numOfCollisions++;
+        //     counter++;
+        // }
+
+        return true;
     }
 
-    void resize(long factor){
-        long newSize = tableSize * factor;
+    void resize(){
+        long newSize = tableSize * resizeFactor;
         long** newHashTables = new long*[2];
 
         for(int i = 0; i < 2;i++){
             newHashTables[i] = new long[newSize];
         }
         
-
         for(int i = 0; i < 2;i++){
             for(int j = 0; j < tableSize;j++){
                 if(hashTables[i][j]){
@@ -122,43 +151,46 @@ struct CuckooHash{
         tableSize = newSize;
         delete[] hashTables;
         hashTables = newHashTables;
-
+        totalCapacity = tableSize * 2;
     }
 
-    void deleteItem(long x, long numOfMaxLoop){
+    void deleteItem(long x){
+        // long insert_val = x;
+        long numOfCollisions = 0;
 
-        long delete_val = x;
+        long table1HashIndex = MurmurHash64A(&x,baseSize,table1Seed) % tableSize;
+        long table2HashIndex = MurmurHash64A(&x,baseSize,table2Seed) % tableSize;
 
-        for(int i = 0; i < numOfMaxLoop;i++){
+        long counter = 0;
 
-               for(int i = 0; i < numOfMaxLoop;i++){
-                    long table1HashIndex = MurmurHash64A(&x,tableSize,table1Seed) % tableSize;
-                    long table2HashIndex = MurmurHash64A(&x,tableSize,table2Seed) % tableSize;
+        while(numOfCollisions < maxNumCollisions){
+            if(hashTables[0][table1HashIndex]){
+                if(hashTables[0][table1HashIndex]==x){
+                    hashTables[0][table1HashIndex] = 0;
+                    break;
+                }
+            }
+            
+            if(hashTables[1][table2HashIndex]){
+                if(hashTables[0][table2HashIndex]==x){
+                    hashTables[0][table2HashIndex] = 0;
+                    break;
+                }
+            }
 
-                    if(hashTables[0][table1HashIndex]){
-                        hashTables[0][table1HashIndex] = NULL;
-                        return;
-                    }
+            table1HashIndex = (long)(table1HashIndex + pow((counter+1),2)) % tableSize; 
+            table2HashIndex = (long)(table2HashIndex + pow((counter+1),2)) % tableSize; 
 
-                    long oldItemInTable1 = hashTables[0][table1HashIndex];
-                    hashTables[0][table1HashIndex] = delete_val;
-                    delete_val = oldItemInTable1;
-
-                    if(hashTables[1][table2HashIndex]){
-                        hashTables[1][table2HashIndex] = NULL;
-                        return;
-                    }
-
-
-                    long oldItemInTable2 = hashTables[0][table2HashIndex];
-                    hashTables[0][table2HashIndex] = delete_val;
-                    delete_val = oldItemInTable2;
-
-                    //// Swapping
-                    rehash();
-                    // insert(x,numOfMaxLoop);
+            numOfCollisions++;
+            counter++;
         }
+    }
 
+    void print(){
+        for(int i = 0; i < 2; i++){
+            for(int j = 0; j < tableSize;j++){
+                cout << "The table value at i = " << i << " and j = " << j << " is: " << hashTables[i][j] << endl;
+            }
         }
     }
 };
