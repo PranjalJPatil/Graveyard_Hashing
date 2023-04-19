@@ -13,3 +13,4 @@ test_2: main_timing_2.cpp
 
 clean:
 	rm -f test test.o
+	rm -f test_2 test_2.o

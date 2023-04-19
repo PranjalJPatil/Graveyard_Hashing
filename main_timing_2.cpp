@@ -63,8 +63,8 @@ int main(int argc, char** argv) {
 
 	t1 = high_resolution_clock::now();
 	for (uint32_t i = 0; i < N; ++i) {
-		cout << "Inserting item at index " << i << endl;
-		ch.insert(in_numbers[i]);
+		// cout << "Inserting item at index " << i << endl;
+		ch.insert(in_numbers [i]);
 	}
 	t2 = high_resolution_clock::now();
 	std::cout << "Time to insert " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
