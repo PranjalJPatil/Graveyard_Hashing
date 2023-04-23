@@ -51,15 +51,15 @@ int main(int argc, char** argv) {
 	high_resolution_clock::time_point t1, t2;
 
 
-	long size = 10;
+	long size = 50;
     double loadFactor = 0.9;
     double enLargeFactor = 2.0;
     long seed = 20;
-    long maxIterations = 4;
+    long maxIterations = 10;
     long table1Seed = 30;
     long table2Seed = 40;
 
-    CuckooHash ch(size, enLargeFactor, loadFactor, size, size, table1Seed, table2Seed);
+    CuckooHash ch(size, maxIterations, enLargeFactor, loadFactor, size, size, table1Seed, table2Seed);
 
 	t1 = high_resolution_clock::now();
 	for (uint32_t i = 0; i < N; ++i) {
@@ -70,12 +70,12 @@ int main(int argc, char** argv) {
 	std::cout << "Time to insert " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
 
 
-	// t1 = high_resolution_clock::now();
-	// for (uint32_t i = 0; i < N; ++i) {
-	// 	ch.lookup(out_numbers[i]);
-	// }
-	// t2 = high_resolution_clock::now();
-	// std::cout << "Time to lookup " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
+	t1 = high_resolution_clock::now();
+	for (uint32_t i = 0; i < N; ++i) {
+		ch.lookup(out_numbers[i]);
+	}
+	t2 = high_resolution_clock::now();
+	std::cout << "Time to lookup " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
 	
 
 

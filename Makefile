@@ -1,4 +1,4 @@
-all: test
+all: test test_2
 
 CC = g++
 OPT= -g -flto -Ofast

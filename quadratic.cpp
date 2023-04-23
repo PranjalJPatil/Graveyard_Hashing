@@ -31,7 +31,7 @@ struct QuadraticHash{
     }
 
     void insert(long x){
-        long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize;
+        long hashIndex = (long) (MurmurHash64A(&x,sizeof(long),tableSeed) % tableSize);
 
         int counter = 0;
         int numOfCollisions = 0;
@@ -39,9 +39,13 @@ struct QuadraticHash{
 
         long insert_val = x;
 
+        cout << "The Insertion of Item: " << x << " has hashIndex of: " << hashIndex << endl; 
+
         while(hashTable[hashIndex] && numOfIterations <= maxIterations){
             long oldItem = hashTable[hashIndex];
-            long newIndex = (long) (hashIndex + pow((counter+1),2)) % tableSize;
+            long nextIndex =  (hashIndex + pow((counter+1),2));
+            long newIndex = (long) (nextIndex % tableSize);
+
             hashIndex = newIndex;
             counter++;
 
@@ -51,27 +55,27 @@ struct QuadraticHash{
                 maxCollisions = numOfCollisions;
             }
 
-            numOfIterations++;
+            if(nextIndex >= tableSize){
+                numOfIterations++;
+            }
             
             hashTable[hashIndex] = insert_val;
             insert_val = oldItem;
         }
 
-        // hashTable[hashIndex] = insert_val;
+        if(!hashTable[hashIndex]){
+            hashTable[hashIndex] = insert_val;
+        }
+
         if(numOfIterations <= maxIterations){
             numberOfElements++;
         }
-        // numberOfElements++;
-
-        // if(numberOfElements >= (long)(loadFactor * tableSize)){
-        //     resize(enlargeFactor);
-        // }
 
     }
 
     bool lookup(long x){
         cout << "The look up starts: " << endl;
-        long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize; 
+        long hashIndex = (long) (MurmurHash64A(&x,sizeof(long),tableSeed) % tableSize); 
         long counter = 0;
         long numOfCollisions = 0;
         long numOfIterations = 0;
@@ -81,11 +85,16 @@ struct QuadraticHash{
             if(hashTable[hashIndex]==x){
                 return true;
             }
-            long newIndex = (long) (hashIndex + pow((counter+1),2)) % tableSize;
+            long nextIndex =  (hashIndex + pow((counter+1),2));
+            long newIndex = (long) (nextIndex % tableSize);
             counter++;
             hashIndex = newIndex;
             numOfCollisions++;
-            numOfIterations++;
+            // long nextIndex =  (hashIndex + pow((counter+1),2));
+
+            if(nextIndex>=tableSize){
+                numOfIterations++;
+            }
             // counter++;
         }
 
@@ -108,7 +117,7 @@ struct QuadraticHash{
     // }
 
     void deleteItem(long x){
-        long hashIndex = MurmurHash64A(&x,tableSize,tableSeed) % tableSize;
+        long hashIndex = MurmurHash64A(&x,sizeof(long),tableSeed) % tableSize;
 
         int counter = 0;
         int numOfCollisions = 0;
@@ -121,11 +130,16 @@ struct QuadraticHash{
                 return;
             }
 
-            long newIndex = (long) (hashIndex + pow((counter+1),2)) % tableSize;
+            long nextIndex =  (hashIndex + pow((counter+1),2));     
+            long newIndex = (long) nextIndex % tableSize;
             hashIndex = newIndex;
             counter++;
             numOfCollisions++;
-            numOfIterations++;
+            // numOfIterations++;
+
+            if(nextIndex >= tableSize){
+                numOfIterations++;
+            }
         }
 
         // if(numOfIterations <= maxIterations){

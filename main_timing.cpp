@@ -50,11 +50,11 @@ int main(int argc, char** argv) {
 	safe_rand_bytes((unsigned char *)out_numbers, sizeof(*out_numbers) * N);
 	high_resolution_clock::time_point t1, t2;
 
-	long size = 10;
+	long size = 100;
     double loadFactor = 0.5;
     double enLargeFactor = 2.0;
     long seed = 20;
-    long maxIterations = 4;
+    long maxIterations = 10;
     QuadraticHash qh(size,loadFactor, enLargeFactor,seed,maxIterations);
 
 	t1 = high_resolution_clock::now();
