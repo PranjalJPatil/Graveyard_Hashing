@@ -1,5 +1,5 @@
-// #include "quadratic.cpp"
-#include "cuckoohashing.cpp"
+#include "quadratic.cpp"
+// #include "cuckoohashing.cpp"
 
 int main(){
 
@@ -8,7 +8,7 @@ int main(){
     double enLargeFactor = 2.0;
     long seed = 20;
     long maxIterations = 4;
-    // QuadraticHash qh(size,loadFactor, enLargeFactor,seed,maxIterations);
+    QuadraticHash qh(size,loadFactor, enLargeFactor,seed,maxIterations);
 
     // qh.insert(5);
     // qh.insert(10);
@@ -40,15 +40,15 @@ int main(){
 
     // qh.deleteItem(5);
     // qh.print();
-    long table1Seed = 30;
-    long table2Seed = 40;
+    // long table1Seed = 30;
+    // long table2Seed = 40;
 
-    CuckooHash ch(size, enLargeFactor, loadFactor, size, size, table1Seed, table2Seed);
+    // CuckooHash ch(size, enLargeFactor, loadFactor, size, size, table1Seed, table2Seed);
     // ch.lookup(5);
 
-    ch.insert(5);
-    ch.insert(10);
-    ch.insert(20);
+    // ch.insert(5);
+    // ch.insert(10);
+    // ch.insert(20);
 
 
 
