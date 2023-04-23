@@ -10,39 +10,49 @@
 
 
 int main(){
-    Robinhoodtomb_Hash *ob = new Robinhoodtomb_Hash(10000);
-    
-    
+    Graveyard_Hash *ob = new Graveyard_Hash(10000);
 
     for(int i=1;i<=9000;i++){
         ob->insert_(i);
     }
     int st= 9001;
     int del= 1;
-    for(int i=0;i<100;i++){
-        cout<<i<<" ";
+    int tot=0;
+    for(int i=0;i<3000;i++){
+       // cout<<i<<" ";
        
-        for(int j=del;j<del+500;j++){
+        for(int j=del;j<del+50;j++){
             
             ob->delete_(j);
         }
        
-        del= del+500;
+        del= del+50;
 
-        for(int j=st;j<st+500;j++){
-            ob->insert_(j);
+        for(int j=st;j<st+50;j++){
+            if(j==239){
+               // ob->print();
+                ob->insert_(j);
+                //ob->print();
+            }else
+            tot+=ob->insert_(j);
+            
+            if(ob->ccc()){
+                cout<<endl<<"element asing problem"<<j<<" "<<ob->printhv(j)<<endl;
+            }
+
         }
       
-        for(int j=del;j<st+500;j++){
+        for(int j=del;j<st+50;j++){
             if(ob->query_(j)){
-            }else cout<<j<<"wrong"<<endl;
+            }else 
+                cout<<j<<" "<<ob->printhv(j)<<"wrong"<<endl;
         }
-        st= st+500;
-   
-        ob->resize_();
-        
-       //ob->print();
-
+        st= st+50;
+        //cout<<endl;
+        //ob->print();
+        //cout<<endl;
+       // ob->resize_();
     }
+    cout<<tot;
 
 }

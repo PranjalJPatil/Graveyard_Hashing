@@ -19,7 +19,7 @@ class Graveyard_Hash{
     public:
     Graveyard_Hash(size_t kn){
         n= kn;
-        lf = 20 ;
+        lf = 15 ;
         st = 0 ;
         keys.resize(n);
        // values.resize(n);
@@ -55,7 +55,8 @@ class Graveyard_Hash{
         return 0;
 
     }
-    void insert_(uint64_t x){
+    int insert_(uint64_t x){
+        int hops=0;
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
         uint64_t ind;
         bool b=0;
@@ -63,6 +64,7 @@ class Graveyard_Hash{
             uint64_t i=hashval;
             uint64_t tp, tpv;
             do{
+                int key= keys[i];
                 uint64_t temp = hv[i];
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
@@ -71,12 +73,15 @@ class Graveyard_Hash{
                             hv[i]=  tpv;
                             keys[ind] =x;
                             hv[ind]= hashval;
-                            return ; 
+                            hops++;
+
+                            return hops; ; 
                         }
                         else{
                             keys[i]= x;
                             hv[i] = hashval;
-                            return ;
+                            hops++;
+                            return hops;
                         }
                     }
                     else{
@@ -85,55 +90,88 @@ class Graveyard_Hash{
                             hv[i] = tpv;
                             keys[ind] =x;
                             hv[ind]= hashval;
-                            return ; 
+                            hops++;
+                            return hops; 
                         }
                         else{
-                            uint64_t j= i;
+                            uint64_t j = (i+1)%n;
+                            int tind = i, hvind = 0;
+                            bool b2= 0;
                             do{
                                 uint64_t temp2= hv[j];
                                 if(keys[j]==UINT64_MAX){
-                                    keys[j] = keys[(j+1)%n];
-                                    hv[j]= hv[(j+1)%n];
-                                    j++;j=j%n;continue;}
-                                else if(keys[j]== 0){break;}
+                                    if((keys[(j+1)%n]!=0 && keys[(j+1)%n]!=UINT64_MAX) ){
+                                        if(b2==0){
+                                        
+                                        }
+                                        else if(hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];}
+                                    }
+                                    j++;j=j%n;
+                                    hops++;
+                                    continue;
+                                }
+                                else if(keys[j]== 0){hops++;break;}
                                 else if(b==0 && temp2 > hashval){
+                                    hops++;
                                     break;
                                 }
                                 else{
-                                    keys[j] = keys[(j+1)%n];
-                                    hv[j]= hv[(j+1)%n];
+                                    if(b2==0){
+                                        hvind =temp2;
+                                        b2=1;
+                                        if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                        }
+                                    }
+                                    else if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                    }
+                                    
                                 }
                                 j++;
                                 if(j==n)j=0;
+                                hops++;
                             }while(j!=st);
                             
                                 if(j==0)
                                     j=n-1;
                                 else
                                     j--;
-                                
+                                keys[tind] = keys[j];
+                                hv[tind] = hv[j];
                                 keys[j]=x;
                                 hv[j] = hashval;
-                                return ;
-                            
+                                
+                                return hops;
                         }
                     }
                 }
-                else if(b==0 && temp >  hashval ){
+                else if(b==0 && temp > hashval ){
                     ind= i;
                     b=1;
                     tp= keys[i];
                     tpv= temp;
                 }
                 else if(b==1){
+                    if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
                     uint64_t to= keys[i], tov= temp;
                     keys[i]= tp;
                     hv[i] = tpv;
                     tp= to;
                     tpv= tov;
                 }
-                
                 i++;
+                hops++;
                 if(i==n) i=0;
             }while(i!= st);
             uint64_t kp= keys[st], kpv= hv[st];
@@ -142,15 +180,19 @@ class Graveyard_Hash{
                 if(keys[i]== 0 || keys[i]==UINT64_MAX){
                     keys[i]=  kp;
                     hv[i]= kpv;
+                    hops++;
                     break;
                 }
                 else{
+                    if(hv[i]!=kpv){
                     uint64_t y= keys[i], yv= hv[i];
                     keys[i] = kp;
                     hv[i] = kpv;
                     kp= y;
                     kpv= yv;
+                    }
                 }
+                hops++;
             }
             st= st+1;
             st= st%n;
@@ -160,92 +202,129 @@ class Graveyard_Hash{
                 hv[end]= tpv;
                 keys[ind]= x;
                 hv[ind] = hashval;
-                return ;
+                return hops;
             }
             else{
                 keys[end] = x;
                 hv[end] = hashval;
-                return;
+                return hops;
             }
             cout<<"No FREE SLOTS";
         }
         else{
-            uint64_t i= st;
-            uint64_t temp, tempv;
+            uint64_t i=st;
+            uint64_t tp, tpv;
             do{
-                uint64_t t2= hv[i];
-                if(keys[i] == 0|| keys[i]==UINT64_MAX){
-                    if(keys[i]==0){
+                int key= keys[i];
+                uint64_t temp = hv[i];
+                if(keys[i] == 0 || keys[i]==UINT64_MAX){
+                    if(keys[i] == 0){
                         if(b){
-                            keys[i] = temp;
-                            hv[i] = tempv;
-                            keys[ind]= x;
-                            hv[ind] = hashval;
-                            return ;
+                            keys[i] = tp;
+                            hv[i]=  tpv;
+                            keys[ind] =x;
+                            hv[ind]= hashval;
+                            hops++;
+
+                            return hops; ; 
                         }
                         else{
-                            keys[i] = x;
+                            keys[i]= x;
                             hv[i] = hashval;
-                            return ;
+                            hops++;
+                            return hops;
                         }
                     }
                     else{
                         if(b){
-                            keys[i] = temp;
-                            hv[i] = tempv;
-                            keys[ind]= x;
-                            hv[ind] = hashval;
-                            return ;
+                            keys[i] = tp;
+                            hv[i] = tpv;
+                            keys[ind] =x;
+                            hv[ind]= hashval;
+                            hops++;
+                            return hops; 
                         }
                         else{
-                            uint64_t j= i;
+                            uint64_t j = (i+1)%n;
+                            int tind = i, hvind = 0;
+                            bool b2= 0;
                             do{
-                                uint64_t temp3= hv[j];
-                                if(keys[j] == 0 ||keys[j]==UINT64_MAX){
-                                    if(keys[j] == 0)break;
-                                    keys[j] = keys[(j+1)%n];
-                                    hv[j]= hv[(j+1)%n];
-                                    j++;
-                                    j= j%n;
+                                uint64_t temp2= hv[j];
+                                if(keys[j]==UINT64_MAX){
+                                    if((keys[(j+1)%n]!=0 && keys[(j+1)%n]!=UINT64_MAX) ){
+                                        if(b2==0){
+                                        
+                                        }
+                                        else if(hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];}
+                                    }
+                                    j++;j=j%n;
+                                    hops++;
                                     continue;
                                 }
-                                else if(temp3 > hashval ){
+                                else if(keys[j]== 0){hops++;break;}
+                                else if(b==0 && temp2 > hashval){
+                                    hops++;
                                     break;
                                 }
-                                else {
-                                    keys[j] = keys[(j+1)%n];
-                                    hv[j]= hv[(j+1)%n];
+                                else{
+                                    if(b2==0){
+                                        hvind =temp2;
+                                        b2=1;
+                                        if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                        }
+                                    }
+                                    else if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                    }
+                                    
                                 }
                                 j++;
                                 if(j==n)j=0;
+                                hops++;
                             }while(j!=st);
-                            if(j ==0){
-                                j=n-1;
-                            }
-                            else j--;
                             
-                            keys[j] = x;
-                            hv[j] = hashval;
-                            return ;
+                                if(j==0)
+                                    j=n-1;
+                                else
+                                    j--;
+                                keys[tind] = keys[j];
+                                hv[tind] = hv[j];
+                                keys[j]=x;
+                                hv[j] = hashval;
+                                
+                                return hops;
                         }
                     }
                 }
-                else if( b==0 && t2 > hashval){
+                else if(b==0 && temp > hashval ){
                     ind= i;
                     b=1;
-                    temp = keys[i];
-                    tempv = t2;
+                    tp= keys[i];
+                    tpv= temp;
                 }
                 else if(b==1){
-                    uint64_t to= keys[i], tov= hv[i];
-                    keys[i] = temp;
-                    hv[i]= tempv;
-                    temp=  to;
-                    tempv= tov;
+                    if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
+                    uint64_t to= keys[i], tov= temp;
+                    keys[i]= tp;
+                    hv[i] = tpv;
+                    tp= to;
+                    tpv= tov;
                 }
                 i++;
-                if(i==n)i=0;
-            }while(i!=st);
+                hops++;
+                if(i==n) i=0;
+            }while(i!= st);
         }
     }
     void delete_(uint64_t x){
@@ -287,11 +366,7 @@ class Graveyard_Hash{
         }
         int j = st;
         int i=0;
-        // cout<<endl;
-        // for(int i=0;i<n;i++){
-        //     cout<<i<<" "<<v[i]<<" "<<vhv[i]<<endl;
-        // }
-        // cout<<endl;
+        
         do{
             uint64_t tj = hv[j];
             if(keys[j] ==  UINT64_MAX || keys[j]== 0){
@@ -330,11 +405,6 @@ class Graveyard_Hash{
             k= k%n;
         }
 
-        //  cout<<endl;
-        //  for(int i=0;i<n;i++){
-        //      cout<<i<<" "<<v[i]<<" "<<vhv[i]<<endl;
-        //  }
-        //  cout<<endl;
 
         if(elements == 0){
             for(int i=0;i<n;i++){
@@ -397,6 +467,34 @@ class Graveyard_Hash{
             hv[i]= vhv[i]; 
         }
         st= tempst;
+    }
+    int printhv(uint64_t x){
+        return MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
+    }
+    bool ccc(){
+        int i=st;
+        int bef ;
+        bool b=0;
+        do{
+            if(keys[i] == 0 || keys[i]==UINT64_MAX){
+                
+            }
+            else{
+                if(b==0){
+                    bef= hv[i];
+                    b=1;
+                }
+                else{
+                if(hv[i]>= bef){
+                    bef= hv[i];
+                }
+                else{return 1;}
+                }
+            }
+            i++;
+            i= i%n;
+        }while(i!=st);
+        return 0;
     }
     void print(){
         cout<<st<<" total "<<endl;
