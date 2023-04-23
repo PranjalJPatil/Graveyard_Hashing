@@ -6,7 +6,7 @@
         "ostream": "cpp",
         "functional": "cpp",
         "zipf.c": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

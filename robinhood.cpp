@@ -6,7 +6,9 @@ using namespace std;
 
 class Robinhood_Hash{
     vector<uint64_t> keys ;
-    vector<uint64_t> values;
+    //vector<uint64_t> values;
+    vector<uint64_t> hv;
+    uint64_t hvt;
     size_t n;
     int st;
     //tombstones are uint64_max;
@@ -15,7 +17,10 @@ class Robinhood_Hash{
          n= tn;
         st = 0 ;
         keys.resize(n);
-        values.resize(n);n= tn;
+        //values.resize(n);
+        n= tn;
+        hv.resize(n);
+      
         st=0;
     }
     bool query_(uint64_t x){
@@ -27,7 +32,7 @@ class Robinhood_Hash{
         else
             i= hashval;
         do{
-            int temp =  MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
+            int temp = hv[i];
             if(keys[i] == x)return 1;
             else if(keys[i] == 0 ){return 0;
             }
@@ -41,182 +46,280 @@ class Robinhood_Hash{
         }while(i!=st);
         return 0;
     }
-    void insert_(uint64_t x){
+    
+    int insert_(uint64_t x){
+        int hops=0;
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
-        int ind;
+        uint64_t ind;
         bool b=0;
         if(hashval>= st){
-            int i=hashval;
+            uint64_t i=hashval;
+            uint64_t tp, tpv;
             do{
-                int temp = MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
+                int key= keys[i];
+                uint64_t temp = hv[i];
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
-                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
-                                
-                                int t=k-1;;
-                                 if(k==0){
-                                    t=n-1;
-                                 }
-                                keys[k] =keys[t];
-                            }
+                            keys[i] = tp;
+                            hv[i]=  tpv;
                             keys[ind] =x;
-                            return ; 
+                            hv[ind]= hashval;
+                            hops++;
+
+                            return hops; ; 
                         }
                         else{
                             keys[i]= x;
-                            return ;
+                            hv[i] = hashval;
+                            hops++;
+                            return hops;
                         }
                     }
                     else{
                         if(b){
-                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
-                                 int t=k-1;;
-                                 if(k==0){
-                                    t=n-1;
-                                 }
-                                 keys[k] =keys[t];
-                            }
+                            keys[i] = tp;
+                            hv[i] = tpv;
                             keys[ind] =x;
-                            return ; 
+                            hv[ind]= hashval;
+                            hops++;
+                            return hops; 
                         }
                         else{
-                            int j= i;
+                            uint64_t j = (i+1)%n;
+                            int tind = i, hvind = 0;
+                            bool b2= 0;
                             do{
-                                int temp2= MurmurHash64A(&keys[j], sizeof(uint64_t), 0)%n;
-                                if(keys[j]==UINT64_MAX){j++;j=j%n;continue;}
-                                else if(keys[j]== 0){break;}
+                                uint64_t temp2= hv[j];
+                                if(keys[j]==UINT64_MAX){
+                                    if((keys[(j+1)%n]!=0 && keys[(j+1)%n]!=UINT64_MAX) ){
+                                        if(b2==0){
+                                        
+                                        }
+                                        else if(hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];}
+                                    }
+                                    j++;j=j%n;
+                                    hops++;
+                                    continue;
+                                }
+                                else if(keys[j]== 0){hops++;break;}
                                 else if(b==0 && temp2 > hashval){
-                                    
+                                    hops++;
                                     break;
                                 }
+                                else{
+                                    if(b2==0){
+                                        hvind =temp2;
+                                        b2=1;
+                                        if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                        }
+                                    }
+                                    else if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                    }
+                                    
+                                }
                                 j++;
-                                j= j%n;
+                                if(j==n)j=0;
+                                hops++;
                             }while(j!=st);
                             
                                 if(j==0)
                                     j=n-1;
                                 else
                                     j--;
-
-                                for(int k = i;k!= j;k=(k+1)%n ){
-                                  //  k= k%n;
-                                    keys[k]= keys[(k+1)%n];
-                                }
+                                keys[tind] = keys[j];
+                                hv[tind] = hv[j];
                                 keys[j]=x;
-                                return ;
-                            
+                                hv[j] = hashval;
+                                
+                                return hops;
                         }
                     }
                 }
-                else if(b==0 && temp >  hashval ){
+                else if(b==0 && temp > hashval ){
                     ind= i;
                     b=1;
+                    tp= keys[i];
+                    tpv= temp;
                 }
-                else{
+                else if(b==1){
+                    if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
+                    uint64_t to= keys[i], tov= temp;
+                    keys[i]= tp;
+                    hv[i] = tpv;
+                    tp= to;
+                    tpv= tov;
                 }
                 i++;
-                i= i%n;
+                hops++;
+                if(i==n) i=0;
             }while(i!= st);
-
+            uint64_t kp= keys[st], kpv= hv[st];
             for(int i=st;i!=hashval;i++){
-                i= i%n;
+                if(i==n)i=0;
                 if(keys[i]== 0 || keys[i]==UINT64_MAX){
-                    int k=i;
-                    while(k>st){
-                        int t= (k==0 ? n-1:k-1);
-                        keys[k]= keys[t];
-                        if(k==0)
-                            k=n-1;
-                        else k--;
-                    }
+                    keys[i]=  kp;
+                    hv[i]= kpv;
+                    hops++;
                     break;
                 }
+                else{
+                    if(hv[i]!=kpv){
+                    uint64_t y= keys[i], yv= hv[i];
+                    keys[i] = kp;
+                    hv[i] = kpv;
+                    kp= y;
+                    kpv= yv;
+                    }
+                }
+                hops++;
             }
             st= st+1;
             st= st%n;
+            uint64_t end= (st==0)?n-1:st-1;
             if(b){
-                int k= (st==0)?n-1:st-1;
-                while(k!=ind){
-                    int t= (k==0 ? n-1:k-1);
-                    keys[k]=  keys[t];
-                    if (k==0)k=n-1;
-                    else
-                    k--;
-                }
+                keys[end] = tp;
+                hv[end]= tpv;
                 keys[ind]= x;
-                return ;
+                hv[ind] = hashval;
+                return hops;
             }
             else{
-                keys[st-1] = x;
-                return;
+                keys[end] = x;
+                hv[end] = hashval;
+                return hops;
             }
             cout<<"No FREE SLOTS";
         }
         else{
-            int i= st;
+            uint64_t i=st;
+            uint64_t tp, tpv;
             do{
-                int t2= MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;; 
-                if(keys[i] == 0|| keys[i]==UINT64_MAX){
-                    if(keys[i]==0){
+                int key= keys[i];
+                uint64_t temp = hv[i];
+                if(keys[i] == 0 || keys[i]==UINT64_MAX){
+                    if(keys[i] == 0){
                         if(b){
-                            for(int k= i;k!=ind;k= (k==0?n-1:k-1)){
-                                int tp= (k==0)?n-1:k-1;
-                                keys[k]= keys[tp];
-                            }
-                            keys[ind]= x;
-                            return ;
+                            keys[i] = tp;
+                            hv[i]=  tpv;
+                            keys[ind] =x;
+                            hv[ind]= hashval;
+                            hops++;
+
+                            return hops; ; 
                         }
                         else{
                             keys[i]= x;
-                            return ;
+                            hv[i] = hashval;
+                            hops++;
+                            return hops;
                         }
                     }
                     else{
                         if(b){
-                            for(int k= i;k!=ind;k= (k==0?n-1:k-1)){
-                                int tp= (k==0)?n-1:k-1;
-                                keys[k]= keys[tp];
-                            }
-                            keys[ind]= x;
-                            return ;
+                            keys[i] = tp;
+                            hv[i] = tpv;
+                            keys[ind] =x;
+                            hv[ind]= hashval;
+                            hops++;
+                            return hops; 
                         }
                         else{
-                            int j= i;
+                            uint64_t j = (i+1)%n;
+                            int tind = i, hvind = 0;
+                            bool b2= 0;
                             do{
-                                int temp3= MurmurHash64A(&keys[j], sizeof(uint64_t), 0)%n;
-                                if(keys[j] == 0 ||keys[j]==UINT64_MAX){
-                                    j++;
-                                    j= j%n;
-                                    continue;}
-                                if(temp3 > hashval ){
+                                uint64_t temp2= hv[j];
+                                if(keys[j]==UINT64_MAX){
+                                    if((keys[(j+1)%n]!=0 && keys[(j+1)%n]!=UINT64_MAX) ){
+                                        if(b2==0){
+                                        
+                                        }
+                                        else if(hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];}
+                                    }
+                                    j++;j=j%n;
+                                    hops++;
+                                    continue;
+                                }
+                                else if(keys[j]== 0){hops++;break;}
+                                else if(b==0 && temp2 > hashval){
+                                    hops++;
                                     break;
                                 }
+                                else{
+                                    if(b2==0){
+                                        hvind =temp2;
+                                        b2=1;
+                                        if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                        }
+                                    }
+                                    else if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                    }
+                                    
+                                }
                                 j++;
-                                j= j%n;
+                                if(j==n)j=0;
+                                hops++;
                             }while(j!=st);
-                            if(j ==0){
-                                j=n-1;
-                            }
-                            else j--;
-                            for(int p= i;p!=j;p++){
-                                p=p%n;
-                                keys[p]= keys[(p+1)%n];
-                            }
-                            keys[j] = x;
-                            return ;
+                            
+                                if(j==0)
+                                    j=n-1;
+                                else
+                                    j--;
+                                keys[tind] = keys[j];
+                                hv[tind] = hv[j];
+                                keys[j]=x;
+                                hv[j] = hashval;
+                                
+                                return hops;
                         }
                     }
                 }
-                else if( b==0 && t2 > hashval){
+                else if(b==0 && temp > hashval ){
                     ind= i;
                     b=1;
+                    tp= keys[i];
+                    tpv= temp;
+                }
+                else if(b==1){
+                    if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
+                    uint64_t to= keys[i], tov= temp;
+                    keys[i]= tp;
+                    hv[i] = tpv;
+                    tp= to;
+                    tpv= tov;
                 }
                 i++;
-                i= i%n;
-            }while(i!=st);
+                hops++;
+                if(i==n) i=0;
+            }while(i!= st);
         }
     }
+    
     void delete_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
         int i;
@@ -226,19 +329,22 @@ class Robinhood_Hash{
         else
             i= hashval;
         do{
-            int temp =  MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
+            int temp =  hv[i];
             if(keys[i] == x){
                 int j = (i+1)%n;
                 do{
-                    int t2 =  MurmurHash64A(&keys[j], sizeof(uint64_t), 0)%n;
+                    int t2 =  hv[j];
                     if(t2 == j){
                         int p = j==0? n-1:j-1;
                         keys[p]= 0;
+                        hv[p] = 0;
                         break;
                     }
                     int p = j==0? n-1:j-1;
                     keys[p]= keys[j];
+                    hv[p] = hv[j];
                     keys[j]=0;
+                    hv[j] = 0;
                     j++;
                     j= j%n;
                 }while(j!=st);

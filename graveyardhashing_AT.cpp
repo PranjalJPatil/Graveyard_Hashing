@@ -7,8 +7,10 @@ using namespace std;
 
 class Graveyard_Hash{
     vector<uint64_t> keys ;
-    vector<uint64_t> values ;
+    //vector<uint64_t> values ;
     uint64_t st ;
+    vector<uint64_t> hv;
+    uint64_t hvt;
     int tot=0 ;
     size_t  n ;
     int lf;
@@ -17,10 +19,13 @@ class Graveyard_Hash{
     public:
     Graveyard_Hash(size_t kn){
         n= kn;
-        lf = 20 ;
+        lf = 15 ;
         st = 0 ;
         keys.resize(n);
-        values.resize(n);
+       // values.resize(n);
+        hv.resize(n);
+        uint64_t c= UINT64_MAX;
+        hvt= MurmurHash64A(&c, sizeof(uint64_t), 0)%n;
     }
     bool query_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
@@ -31,7 +36,7 @@ class Graveyard_Hash{
         else
             i= hashval;
         do{
-            int temp =  MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
+            int temp =  hv[i];
             if(keys[i] == x)return 1;
             else if(keys[i] == 0 ){return 0;
             }
@@ -50,185 +55,280 @@ class Graveyard_Hash{
         return 0;
 
     }
-    void insert_(uint64_t x){
+    int insert_(uint64_t x){
+        int hops=0;
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
-        int ind;
+        uint64_t ind;
         bool b=0;
         if(hashval>= st){
-            int i=hashval;
+            uint64_t i=hashval;
+            uint64_t tp, tpv;
             do{
-                int temp = MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
+                int key= keys[i];
+                uint64_t temp = hv[i];
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
-                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
-                                
-                                int t=k-1;;
-                                 if(k==0){
-                                    t=n-1;
-                                 }
-                                keys[k] =keys[t];
-                            }
+                            keys[i] = tp;
+                            hv[i]=  tpv;
                             keys[ind] =x;
-                            return ; 
+                            hv[ind]= hashval;
+                            hops++;
+
+                            return hops; ; 
                         }
                         else{
                             keys[i]= x;
-                            return ;
+                            hv[i] = hashval;
+                            hops++;
+                            return hops;
                         }
                     }
                     else{
                         if(b){
-                            for(int k= i;k!=ind;k=(k==0?n-1:k-1) ){
-                                 int t=k-1;;
-                                 if(k==0){
-                                    t=n-1;
-                                 }
-                                 keys[k] =keys[t];
-                            }
+                            keys[i] = tp;
+                            hv[i] = tpv;
                             keys[ind] =x;
-                            return ; 
+                            hv[ind]= hashval;
+                            hops++;
+                            return hops; 
                         }
                         else{
-                            int j= i;
+                            uint64_t j = (i+1)%n;
+                            int tind = i, hvind = 0;
+                            bool b2= 0;
                             do{
-                                int temp2= MurmurHash64A(&keys[j], sizeof(uint64_t), 0)%n;
-                                if(keys[j]==UINT64_MAX){j++;j=j%n;continue;}
-                                else if(keys[j]== 0){break;}
+                                uint64_t temp2= hv[j];
+                                if(keys[j]==UINT64_MAX){
+                                    if((keys[(j+1)%n]!=0 && keys[(j+1)%n]!=UINT64_MAX) ){
+                                        if(b2==0){
+                                        
+                                        }
+                                        else if(hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];}
+                                    }
+                                    j++;j=j%n;
+                                    hops++;
+                                    continue;
+                                }
+                                else if(keys[j]== 0){hops++;break;}
                                 else if(b==0 && temp2 > hashval){
-                                    
+                                    hops++;
                                     break;
                                 }
+                                else{
+                                    if(b2==0){
+                                        hvind =temp2;
+                                        b2=1;
+                                        if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                        }
+                                    }
+                                    else if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                    }
+                                    
+                                }
                                 j++;
-                                j= j%n;
+                                if(j==n)j=0;
+                                hops++;
                             }while(j!=st);
                             
                                 if(j==0)
                                     j=n-1;
                                 else
                                     j--;
-
-                                for(int k = i;k!= j;k=(k+1)%n ){
-                                  //  k= k%n;
-                                    keys[k]= keys[(k+1)%n];
-                                }
+                                keys[tind] = keys[j];
+                                hv[tind] = hv[j];
                                 keys[j]=x;
-                                return ;
-                            
+                                hv[j] = hashval;
+                                
+                                return hops;
                         }
                     }
                 }
-                else if(b==0 && temp >  hashval ){
+                else if(b==0 && temp > hashval ){
                     ind= i;
                     b=1;
+                    tp= keys[i];
+                    tpv= temp;
                 }
-                else{
+                else if(b==1){
+                    if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
+                    uint64_t to= keys[i], tov= temp;
+                    keys[i]= tp;
+                    hv[i] = tpv;
+                    tp= to;
+                    tpv= tov;
                 }
                 i++;
-                i= i%n;
+                hops++;
+                if(i==n) i=0;
             }while(i!= st);
-
+            uint64_t kp= keys[st], kpv= hv[st];
             for(int i=st;i!=hashval;i++){
-                i= i%n;
+                if(i==n)i=0;
                 if(keys[i]== 0 || keys[i]==UINT64_MAX){
-                    int k=i;
-                    while(k>st){
-                        int t= (k==0 ? n-1:k-1);
-                        keys[k]= keys[t];
-                        if(k==0)
-                            k=n-1;
-                        else k--;
-                    }
+                    keys[i]=  kp;
+                    hv[i]= kpv;
+                    hops++;
                     break;
                 }
+                else{
+                    if(hv[i]!=kpv){
+                    uint64_t y= keys[i], yv= hv[i];
+                    keys[i] = kp;
+                    hv[i] = kpv;
+                    kp= y;
+                    kpv= yv;
+                    }
+                }
+                hops++;
             }
             st= st+1;
             st= st%n;
+            uint64_t end= (st==0)?n-1:st-1;
             if(b){
-                int k= (st==0)?n-1:st-1;
-                while(k!=ind){
-                    int t= (k==0 ? n-1:k-1);
-                    keys[k]=  keys[t];
-                    if (k==0)k=n-1;
-                    else
-                    k--;
-                }
+                keys[end] = tp;
+                hv[end]= tpv;
                 keys[ind]= x;
-                return ;
+                hv[ind] = hashval;
+                return hops;
             }
             else{
-                keys[st-1] = x;
-                return;
+                keys[end] = x;
+                hv[end] = hashval;
+                return hops;
             }
             cout<<"No FREE SLOTS";
         }
         else{
-            int i= st;
+            uint64_t i=st;
+            uint64_t tp, tpv;
             do{
-                int t2= MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;; 
-                if(keys[i] == 0|| keys[i]==UINT64_MAX){
-                    if(keys[i]==0){
+                int key= keys[i];
+                uint64_t temp = hv[i];
+                if(keys[i] == 0 || keys[i]==UINT64_MAX){
+                    if(keys[i] == 0){
                         if(b){
-                            for(int k= i;k!=ind;k= (k==0?n-1:k-1)){
-                                int tp= (k==0)?n-1:k-1;
-                                keys[k]= keys[tp];
-                            }
-                            keys[ind]= x;
-                            return ;
+                            keys[i] = tp;
+                            hv[i]=  tpv;
+                            keys[ind] =x;
+                            hv[ind]= hashval;
+                            hops++;
+
+                            return hops; ; 
                         }
                         else{
                             keys[i]= x;
-                            return ;
+                            hv[i] = hashval;
+                            hops++;
+                            return hops;
                         }
                     }
                     else{
                         if(b){
-                            for(int k= i;k!=ind;k= (k==0?n-1:k-1)){
-                                int tp= (k==0)?n-1:k-1;
-                                keys[k]= keys[tp];
-                            }
-                            keys[ind]= x;
-                            return ;
+                            keys[i] = tp;
+                            hv[i] = tpv;
+                            keys[ind] =x;
+                            hv[ind]= hashval;
+                            hops++;
+                            return hops; 
                         }
                         else{
-                            int j= i;
+                            uint64_t j = (i+1)%n;
+                            int tind = i, hvind = 0;
+                            bool b2= 0;
                             do{
-                                int temp3= MurmurHash64A(&keys[j], sizeof(uint64_t), 0)%n;
-                                if(keys[j] == 0 ||keys[j]==UINT64_MAX){
-                                    j++;
-                                    j= j%n;
-                                    continue;}
-                                if(temp3 > hashval ){
+                                uint64_t temp2= hv[j];
+                                if(keys[j]==UINT64_MAX){
+                                    if((keys[(j+1)%n]!=0 && keys[(j+1)%n]!=UINT64_MAX) ){
+                                        if(b2==0){
+                                        
+                                        }
+                                        else if(hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];}
+                                    }
+                                    j++;j=j%n;
+                                    hops++;
+                                    continue;
+                                }
+                                else if(keys[j]== 0){hops++;break;}
+                                else if(b==0 && temp2 > hashval){
+                                    hops++;
                                     break;
                                 }
+                                else{
+                                    if(b2==0){
+                                        hvind =temp2;
+                                        b2=1;
+                                        if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                        }
+                                    }
+                                    else if( hv[(j+1)%n]!=hvind){
+                                        keys[tind] =keys[(j)];
+                                        hv[tind] = hv[(j)];
+                                        tind= j;
+                                        hvind= hv[(j+1)%n];
+                                    }
+                                    
+                                }
                                 j++;
-                                j= j%n;
+                                if(j==n)j=0;
+                                hops++;
                             }while(j!=st);
-                            if(j ==0){
-                                j=n-1;
-                            }
-                            else j--;
-                            for(int p= i;p!=j;p++){
-                                p=p%n;
-                                keys[p]= keys[(p+1)%n];
-                            }
-                            keys[j] = x;
-                            return ;
+                            
+                                if(j==0)
+                                    j=n-1;
+                                else
+                                    j--;
+                                keys[tind] = keys[j];
+                                hv[tind] = hv[j];
+                                keys[j]=x;
+                                hv[j] = hashval;
+                                
+                                return hops;
                         }
                     }
                 }
-                else if( b==0 && t2 > hashval){
+                else if(b==0 && temp > hashval ){
                     ind= i;
                     b=1;
+                    tp= keys[i];
+                    tpv= temp;
+                }
+                else if(b==1){
+                    if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
+                    uint64_t to= keys[i], tov= temp;
+                    keys[i]= tp;
+                    hv[i] = tpv;
+                    tp= to;
+                    tpv= tov;
                 }
                 i++;
-                i= i%n;
-            }while(i!=st);
+                hops++;
+                if(i==n) i=0;
+            }while(i!= st);
         }
     }
     void delete_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
-     //   cout<<st<<" "<<hashval<<endl;
         int i;
         if(hashval < st){
             i = st; 
@@ -236,270 +336,173 @@ class Graveyard_Hash{
         else
             i= hashval;
         do{
-            int temp =  MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n;
-            if(keys[i] == x){keys[i]=UINT64_MAX;return ;}
+            uint64_t temp =  hv[i];
+            if(keys[i] == x){keys[i]=UINT64_MAX;
+            hv[i] = hvt;
+            return ;}
             else if(keys[i] == 0 ){return ;
             }
             else if(keys[i] == UINT64_MAX){
                 i++;
-                i= i%n;
+                if(i==n)i=0;
             }
             else if(temp > hashval ){
                 return ;
             }
             else{
                 i++;
-                i= i%n;
+                if(i==n)i=0;
             }
         }while(i!=st);
         return ;
     }
 
-    void resizing_at(){
-        //cout<<"jj"<<st<<endl;
+    void resize_(){
         vector<uint64_t> v(n);
+        vector<uint64_t> vhv(n);
+        for(int i=0;i<n;i+=lf){
+            v[i] =UINT64_MAX;
+            vhv[i] =hvt;
+        }
+        int j = st;
+        int i=0;
         
-        
-        for(int i=0;i<n;i += lf){
-            v[i]= UINT64_MAX;
+        do{
+            uint64_t tj = hv[j];
+            if(keys[j] ==  UINT64_MAX || keys[j]== 0){
+                j++;
+                j= j%n;
+                if(j==st){break;}
+
+            }
+            else if(tj > i){
+                i= tj ;
+                if(v[i]==UINT64_MAX){i++;continue;}
+                v[i]=keys[j];
+                vhv[i] = hv[j];
+                i++;
+                j++;
+                j=j%n;
+                if(j==st){break;}
+
+            }
+            else{
+                if(v[i]==UINT64_MAX){i++;continue;}
+                v[i]=keys[j];
+                vhv[i] = hv[j];
+                i++;
+                j++;
+                j= j%n ;
+                if(j==st){break;}
+            }
+        }while(i!=n );
+        int elements = 0;
+        int k = j;
+        while(k!=st){
+            if(keys[k]==0 || keys[k] == UINT64_MAX){
+            }else{elements++;}
+            k++;
+            k= k%n;
+        }
+
+
+        if(elements == 0){
+            for(int i=0;i<n;i++){
+                keys[i] = v[i];
+                hv[i]= vhv[i]; 
+            }
+            st= 0;
+            return ;
+        }
+        i=0;
+        while(i<n && elements!=0){
+            if(v[i]==0){
+               elements--; 
+            }
+            i++;
         }
         
-        int j = st;
-        for(int i=0 ; i<n ; i++){
-            int t = MurmurHash64A( &keys[j], sizeof(uint64_t),0)%n;
-            if(keys[j] == 0 || keys[j] == UINT64_MAX){
-                j++;
+        i--;
+        k = i;
+        int tempst = 0;
+
+        while(1){
+            if(v[i] != 0 && v[i]!=UINT64_MAX){
+                if(v[k]==0){
+                    v[k] = v[i];
+                    vhv[k]=vhv[i];
+                    tempst = k;
+                    v[i] = 0;
+                    vhv[i]=0;
+                    if(i==0){break;}
+                    i--;
+                    k--;
+                }
+                else{
+                    k--;
+                }
+            }
+            else{
+                if(i==0){break;}
                 i--;
-                j= j%n;
-                continue;
+                
             }
-            if(i < t){
-                i= t;
-                if(v[i]==UINT64_MAX)continue;
-                v[i] = keys[j]; 
-                j++;
-                j= j%n;
-                continue;
+        }
+        
+        i=0;
+        while(j!=st){
+            if(keys[j] == 0 || keys[j] ==UINT64_MAX){}
+            else{
+                if(v[i]==UINT64_MAX){i++;continue;}
+                v[i] = keys[j];
+                vhv[i]= hv[j];
+                i++;
             }
-            if(v[i]==UINT64_MAX)continue;
-            v[i]= keys[j];
             j++;
             j= j%n;
         }
-        int left=0;
-        if(j==0)j= n-1;
-        else
-        j--;
-        int h=j;
-        while(h!=st){
-            if(keys[h] == 0 || keys[h] == UINT64_MAX){
-                h++;
-                h= h%n;
-                continue;
-            }    
-            left++;
-            h++;
-            h= h%n;
-        }
-        
-       // cout<<" left"<<left<<"j"<<j<<endl;
-        if(left == 0){
-            for(int i=0;i<n;i++){
-                keys[i]= v[i];
-            }
-          return ;  
-        }
-        int k= 0;
-        while(left!=0){
-            if(v[k]==0){
-                left--;
-            }
-            k++;
-        }
-        k--;
-        // cout<<"k"<<k<<"  "<<endl;
-
-        // for(int p=0;p<n;p++){
-        //     cout<<v[p]<<"  ";
-        // }
-        // cout<<endl;
-        // for(int p=0;p<n;p++){
-        //     cout<<keys[p]<<" == "<<(MurmurHash64A(&keys[p], sizeof(uint64_t), 0)%n)<<endl;
-        // }
-        // cout<<endl;
-        int tempst;
-        int i= k;
-        while(1){
-            if(v[i]==0 || v[i]== UINT64_MAX){
-                if(i==0)break;
-                i--;
-            }
-            else{
-                if(v[k]==UINT64_MAX){
-                    k--;
-                    continue;
-                }
-                v[k]= v[i];
-                
-                tempst = k;
-                k--;
-                if(i==0)break;
-                i--;
-                
-            } 
-        }
-
-         i=0;
-         while(j!=st){
-            if(v[i] == UINT64_MAX){
-                i++;
-                continue;
-            }
-            else{
-                if(keys[j]==0|| keys[j]==UINT64_MAX){
-                    j++;
-                    j= j%n;
-                    continue;
-                }
-                v[i]= keys[j];
-                j++;
-                j= j%n;
-                i++;
-
-            }
-        }
+        tempst = i;
         for(int i=0;i<n;i++){
-            keys[i]= v[i];
+            keys[i] = v[i];
+            hv[i]= vhv[i]; 
         }
-        st = tempst;
-        //cout<<"fnst"<<st;
+        st= tempst;
     }
-
-    void normal_resize(){
-
-        vector<uint64_t> v(n);
-        int j = st;
-        for(int i=0 ; i<n ; i++){
-            int t = MurmurHash64A( &keys[j], sizeof(uint64_t),0)%n;
-            if(keys[j] == 0 || keys[j] == UINT64_MAX){
-                j++;
-                i--;
-                j= j%n;
-                continue;
-            }
-            if(i < t){
-                i= t;
-                if(v[i]==UINT64_MAX)continue;
-                v[i] = keys[j]; 
-                j++;
-                j= j%n;
-                continue;
-            }
-            if(v[i]==UINT64_MAX)continue;
-            v[i]= keys[j];
-            j++;
-            j= j%n;
-        }
-        int left=0;
-        if(j==0)j= n-1;
-        else
-        j--;
-        int h=j;
-        while(h!=st){
-            if(keys[h] == 0 || keys[h] == UINT64_MAX){
-                h++;
-                h= h%n;
-                continue;
-            }    
-            left++;
-            h++;
-            h= h%n;
-        }
-        
-        cout<<" left"<<left<<"j"<<j<<endl;
-        if(left == 0){
-            for(int i=0;i<n;i++){
-                keys[i]= v[i];
-            }
-          return ;  
-        }
-        int k= 0;
-        while(left!=0){
-            if(v[k]==0){
-                left--;
-            }
-            k++;
-        }
-        k--;
-        cout<<"k"<<k<<"  "<<endl;
-
-        for(int p=0;p<n;p++){
-            cout<<v[p]<<"  ";
-        }
-        cout<<endl;
-        for(int p=0;p<n;p++){
-            cout<<keys[p]<<" == "<<(MurmurHash64A(&keys[p], sizeof(uint64_t), 0)%n)<<endl;
-        }
-        cout<<endl;
-        int tempst;
-        int i= k;
-        while(1){
-            if(v[i]==0 || v[i]== UINT64_MAX){
-                if(i==0)break;
-                i--;
+    int printhv(uint64_t x){
+        return MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
+    }
+    bool ccc(){
+        int i=st;
+        int bef ;
+        bool b=0;
+        do{
+            if(keys[i] == 0 || keys[i]==UINT64_MAX){
+                
             }
             else{
-                if(v[k]==UINT64_MAX){
-                    k--;
-                    continue;
+                if(b==0){
+                    bef= hv[i];
+                    b=1;
                 }
-                v[k]= v[i];
-                
-                tempst = k;
-                k--;
-                if(i==0)break;
-                i--;
-                
-            } 
-        }
-
-         i=0;
-         while(j!=st){
-            if(v[i] == UINT64_MAX){
-                i++;
-                continue;
-            }
-            else{
-                if(keys[j]==0|| keys[j]==UINT64_MAX){
-                    j++;
-                    j= j%n;
-                    continue;
+                else{
+                if(hv[i]>= bef){
+                    bef= hv[i];
                 }
-                v[i]= keys[j];
-                j++;
-                j= j%n;
-                i++;
-
+                else{return 1;}
+                }
             }
-        }
-        for(int i=0;i<n;i++){
-            keys[i]= v[i];
-        }
-        st = tempst;
-        cout<<"fnst"<<st;
+            i++;
+            i= i%n;
+        }while(i!=st);
+        return 0;
     }
     void print(){
         cout<<st<<" total "<<endl;
         for(int i=0;i<n;i++){
-            cout<<i<<"==="<<keys[i]<<"===="<<MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n<<"      ";
+            cout<<i<<"==="<<keys[i]<<"===="<<MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n<<"==="<<hv[i]<<endl;
         }
     }
-    void print2(){
-        cout<<st<<" total "<<endl;
-        for(int i=0;i<n;i++){
-           // if(keys[i]==0)continue;
-            cout<<i<<"  "<<MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n<<"        ";
-        }
-        cout<<endl;
+    void print2(uint64_t i){
+        cout<<i<<"==="<<"===="<<MurmurHash64A(&i, sizeof(uint64_t), 0)%n<<"==="<<endl;
     } 
 };
