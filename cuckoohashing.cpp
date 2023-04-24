@@ -58,8 +58,8 @@ struct CuckooHash{
         long table1HashIndex = MurmurHash64A(&x,sizeof(long),table1Seed) % tableSize;
         long table2HashIndex = MurmurHash64A(&x,sizeof(long),table2Seed) % tableSize;
 
-        cout << "The table1HashIndex is: " << table1HashIndex << endl;
-        cout << "The table2HashIndex is: " << table2HashIndex << endl;
+        // cout << "The table1HashIndex is: " << table1HashIndex << endl;
+        // cout << "The table2HashIndex is: " << table2HashIndex << endl;
 
         long numOfCollisions = 0;
         long numOfIterations = 0;
@@ -114,8 +114,8 @@ struct CuckooHash{
         long table1HashIndex = MurmurHash64A(&x,sizeof(long),table1Seed) % tableSize;
         long table2HashIndex = MurmurHash64A(&x,sizeof(long),table2Seed) % tableSize;
 
-        cout << "Lookup: The index of item " << x << " at hash table 1 is: " << table1HashIndex << endl;
-        cout << "Lookup: The index of item " << x << " at hash table 2 is: " << table2HashIndex << endl;
+        // cout << "Lookup: The index of item " << x << " at hash table 1 is: " << table1HashIndex << endl;
+        // cout << "Lookup: The index of item " << x << " at hash table 2 is: " << table2HashIndex << endl;
 
         long counter = 0;
 
@@ -219,5 +219,9 @@ struct CuckooHash{
                 cout << "The table value at i = " << i << " and j = " << j << " is: " << hashTables[i][j] << endl;
             }
         }
+    }
+
+    long numOfElements(){
+        return numberOfElements;
     }
 };

@@ -33,13 +33,17 @@ struct QuadraticHash{
     void insert(long x){
         long hashIndex = (long) (MurmurHash64A(&x,sizeof(long),tableSeed) % tableSize);
 
+        if(lookup(x)){
+            return;
+        }
+
         int counter = 0;
         int numOfCollisions = 0;
         int numOfIterations = 0;
 
         long insert_val = x;
 
-        cout << "The Insertion of Item: " << x << " has hashIndex of: " << hashIndex << endl; 
+        // cout << "The Insertion of Item: " << x << " has hashIndex of: " << hashIndex << endl; 
 
         while(hashTable[hashIndex] && numOfIterations <= maxIterations){
             long oldItem = hashTable[hashIndex];
@@ -63,24 +67,25 @@ struct QuadraticHash{
             insert_val = oldItem;
         }
 
-        if(!hashTable[hashIndex]){
+        if(hashTable[hashIndex]==0){
             hashTable[hashIndex] = insert_val;
         }
 
         if(numOfIterations <= maxIterations){
+            // cout << "Element inserted!!!" << endl;
             numberOfElements++;
         }
 
     }
 
     bool lookup(long x){
-        cout << "The look up starts: " << endl;
+        // cout << "The look up starts: " << endl;
         long hashIndex = (long) (MurmurHash64A(&x,sizeof(long),tableSeed) % tableSize); 
         long counter = 0;
         long numOfCollisions = 0;
         long numOfIterations = 0;
 
-        cout << "The Lookup of Item: " << x << " has hashIndex of: " << hashIndex << endl; 
+        // cout << "The Lookup of Item: " << x << " has hashIndex of: " << hashIndex << endl; 
         while(hashTable[hashIndex] && numOfIterations < maxIterations){
             if(hashTable[hashIndex]==x){
                 return true;
@@ -98,23 +103,11 @@ struct QuadraticHash{
             // counter++;
         }
 
+        // cout << "Lookup doesn't exist!!!" << endl;
+
         return false;
     }
 
-    // void resize(double factor){
-    //     long newSize = tableSize * factor;
-    //     long *newHashTable = new long[newSize];
-    //     for(int i = 0; i < tableSize;i++){
-    //         if(hashTable[i]){
-    //             newHashTable[i] = hashTable[i];
-    //             // cout << "The current value of hash table at index " << i << " is: " << hashTable[i] << endl;
-    //         }
-    //     }
-
-    //     tableSize = newSize;
-    //     delete[] hashTable;
-    //     hashTable = newHashTable;
-    // }
 
     void deleteItem(long x){
         long hashIndex = MurmurHash64A(&x,sizeof(long),tableSeed) % tableSize;
@@ -153,6 +146,10 @@ struct QuadraticHash{
         for(int i = 0; i < tableSize; i++){
             cout << "The current value of hash table at index " << i << " is: " << hashTable[i] << endl;
         }
+    }
+
+    long numOfElements(){
+        return numberOfElements;
     }
 
 

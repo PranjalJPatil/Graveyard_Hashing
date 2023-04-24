@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
 		std::cerr << "Specify the number of items for the test.\n";
 		exit(1);
 	}
+
 	uint32_t N = atoi(argv[1]); 	// number of items
 
 	// Generate N numbers to insert
@@ -50,28 +51,48 @@ int main(int argc, char** argv) {
 	safe_rand_bytes((unsigned char *)out_numbers, sizeof(*out_numbers) * N);
 	high_resolution_clock::time_point t1, t2;
 
-	long size = 100;
-    double loadFactor = 0.5;
-    double enLargeFactor = 2.0;
-    long seed = 20;
-    long maxIterations = 10;
-    QuadraticHash qh(size,loadFactor, enLargeFactor,seed,maxIterations);
 
-	t1 = high_resolution_clock::now();
-	for (uint32_t i = 0; i < N; ++i) {
-		// cout << "Inserting item at index " << i << endl;
-		qh.insert(in_numbers[i]);
+	long numOfTestPoints = 7;
+	long size = 10;
+	double loadFactor = 0.5;
+	double enLargeFactor = 2.0;
+	long seed = 20;
+	long maxIterations = 1000;
+
+	for(int i = 0; i < numOfTestPoints;i++){
+		cout << "Test with the maximum number of iterations: " << maxIterations << endl;
+		// long size = 100;
+		// double loadFactor = 0.5;
+		// double enLargeFactor = 2.0;
+		// long seed = 20;
+		// long maxIterations = 10;
+		QuadraticHash qh(size,loadFactor, enLargeFactor,seed,maxIterations);
+
+		t1 = high_resolution_clock::now();
+		for (uint32_t i = 0; i < N; ++i) {
+			// cout << "Inserting item at index " << i << endl;
+			qh.insert(in_numbers[i]);
+		}
+		t2 = high_resolution_clock::now();
+		std::cout << "Time to insert " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
+		// std::cout << "The number of elements inserted is: " + std::to_string(qh.numOfElements()) + "\n";
+
+		// qh.print();
+		
+
+
+		t1 = high_resolution_clock::now();
+		for (uint32_t i = 0; i < N; ++i) {
+			qh.lookup(out_numbers[i]);
+		}
+		t2 = high_resolution_clock::now();
+		std::cout << "Time to lookup " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
+
+
+		maxIterations = maxIterations * 2;
 	}
-	t2 = high_resolution_clock::now();
-	std::cout << "Time to insert " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
 
-
-	t1 = high_resolution_clock::now();
-	for (uint32_t i = 0; i < N; ++i) {
-		qh.lookup(out_numbers[i]);
-	}
-	t2 = high_resolution_clock::now();
-	std::cout << "Time to lookup " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
+	
 
 	
 
