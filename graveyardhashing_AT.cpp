@@ -6,15 +6,15 @@
 using namespace std;
 
 class Graveyard_Hash{
-    vector<uint64_t> keys ;
+    vector<uint64_t> keys ;  // stores the keys values in hash table
     //vector<uint64_t> values ;
-    uint64_t st ;
-    vector<uint64_t> hv;
-    uint64_t hvt;
+    uint64_t st ;           // denotes the start of hash table
+    vector<uint64_t> hv;    // stores the hash values of corresponding keys
+    uint64_t hvt;           // store the hash value of tombstone
     int tot=0 ;
-    size_t  n ;
-    int lf;
-    int k =0 ;
+    size_t  n ;             // size of hash table
+    int lf;                 // stores the reditribution of tombstone frequency
+    
     //tombstones are uint64_max;
     public:
     Graveyard_Hash(size_t kn){
@@ -35,6 +35,7 @@ class Graveyard_Hash{
         }
         else
             i= hashval;
+        //in this loop tombstones are skipped to search for an element
         do{
             int temp =  hv[i];
             if(keys[i] == x)return 1;
@@ -55,17 +56,22 @@ class Graveyard_Hash{
         return 0;
 
     }
+    
     int insert_(uint64_t x){
+        //hops store the number of iterations done to insert an element (indexes travelled)
         int hops=0;
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
+        // these values are used in shifting data
         uint64_t ind;
         bool b=0;
         if(hashval>= st){
             uint64_t i=hashval;
-            uint64_t tp, tpv;
+            uint64_t tp, tpv; // temp values used in shifting
+            // loop runs until a free slot found
             do{
                 int key= keys[i];
                 uint64_t temp = hv[i];
+                // if keys[i] is 0 then shift and insert happens, if tombstone then maybe we have to iterate more
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
@@ -97,6 +103,7 @@ class Graveyard_Hash{
                             uint64_t j = (i+1)%n;
                             int tind = i, hvind = 0;
                             bool b2= 0;
+                            // loop to find hashval greater that x hashval
                             do{
                                 uint64_t temp2= hv[j];
                                 if(keys[j]==UINT64_MAX){
@@ -157,12 +164,14 @@ class Graveyard_Hash{
                     }
                 }
                 else if(b==0 && temp > hashval ){
+                    // in case before we find empty slot we find the hashval greater than x hash value
                     ind= i;
                     b=1;
                     tp= keys[i];
                     tpv= temp;
                 }
                 else if(b==1){
+                    // shifting of data
                     if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
                     uint64_t to= keys[i], tov= temp;
                     keys[i]= tp;
@@ -175,6 +184,7 @@ class Graveyard_Hash{
                 if(i==n) i=0;
             }while(i!= st);
             uint64_t kp= keys[st], kpv= hv[st];
+            // in case no free slot found then we have to shift the start so that a extra space is there at end
             for(int i=st;i!=hashval;i++){
                 if(i==n)i=0;
                 if(keys[i]== 0 || keys[i]==UINT64_MAX){
@@ -214,9 +224,10 @@ class Graveyard_Hash{
         else{
             uint64_t i=st;
             uint64_t tp, tpv;
-            do{
+             do{
                 int key= keys[i];
                 uint64_t temp = hv[i];
+                // if keys[i] is 0 then shift and insert happens, if tombstone then maybe we have to iterate more
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
@@ -248,6 +259,7 @@ class Graveyard_Hash{
                             uint64_t j = (i+1)%n;
                             int tind = i, hvind = 0;
                             bool b2= 0;
+                            // loop to find hashval greater that x hashval
                             do{
                                 uint64_t temp2= hv[j];
                                 if(keys[j]==UINT64_MAX){
@@ -308,12 +320,14 @@ class Graveyard_Hash{
                     }
                 }
                 else if(b==0 && temp > hashval ){
+                    // in case before we find empty slot we find the hashval greater than x hash value
                     ind= i;
                     b=1;
                     tp= keys[i];
                     tpv= temp;
                 }
                 else if(b==1){
+                    // shifting of data
                     if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
                     uint64_t to= keys[i], tov= temp;
                     keys[i]= tp;
@@ -326,7 +340,9 @@ class Graveyard_Hash{
                 if(i==n) i=0;
             }while(i!= st);
         }
+        return hops;
     }
+
     void delete_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
         int i;
@@ -335,6 +351,7 @@ class Graveyard_Hash{
         }
         else
             i= hashval;
+        // loops skipped when it is tombstone
         do{
             uint64_t temp =  hv[i];
             if(keys[i] == x){keys[i]=UINT64_MAX;
@@ -358,15 +375,17 @@ class Graveyard_Hash{
     }
 
     void resize_(){
+        // temporary vectors used store keys and hash values
         vector<uint64_t> v(n);
         vector<uint64_t> vhv(n);
+        // tombstoned distributed
         for(int i=0;i<n;i+=lf){
             v[i] =UINT64_MAX;
             vhv[i] =hvt;
         }
         int j = st;
         int i=0;
-        
+        // elements inserted in temporary vectors loops until reach end of temp vector
         do{
             uint64_t tj = hv[j];
             if(keys[j] ==  UINT64_MAX || keys[j]== 0){
@@ -398,6 +417,8 @@ class Graveyard_Hash{
         }while(i!=n );
         int elements = 0;
         int k = j;
+        //checks for how many elements left to insert
+
         while(k!=st){
             if(keys[k]==0 || keys[k] == UINT64_MAX){
             }else{elements++;}
@@ -425,7 +446,7 @@ class Graveyard_Hash{
         i--;
         k = i;
         int tempst = 0;
-
+        // This shift the temp vectors starting elements so to make space for elements left to insert 
         while(1){
             if(v[i] != 0 && v[i]!=UINT64_MAX){
                 if(v[k]==0){
@@ -450,6 +471,7 @@ class Graveyard_Hash{
         }
         
         i=0;
+        //elements inserted in temp vector
         while(j!=st){
             if(keys[j] == 0 || keys[j] ==UINT64_MAX){}
             else{
@@ -462,6 +484,7 @@ class Graveyard_Hash{
             j= j%n;
         }
         tempst = i;
+        // elements copied to original
         for(int i=0;i<n;i++){
             keys[i] = v[i];
             hv[i]= vhv[i]; 
@@ -496,13 +519,5 @@ class Graveyard_Hash{
         }while(i!=st);
         return 0;
     }
-    void print(){
-        cout<<st<<" total "<<endl;
-        for(int i=0;i<n;i++){
-            cout<<i<<"==="<<keys[i]<<"===="<<MurmurHash64A(&keys[i], sizeof(uint64_t), 0)%n<<"==="<<hv[i]<<endl;
-        }
-    }
-    void print2(uint64_t i){
-        cout<<i<<"==="<<"===="<<MurmurHash64A(&i, sizeof(uint64_t), 0)%n<<"==="<<endl;
-    } 
+    
 };

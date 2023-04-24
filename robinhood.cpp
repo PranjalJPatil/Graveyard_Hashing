@@ -5,12 +5,12 @@
 using namespace std;
 
 class Robinhood_Hash{
-    vector<uint64_t> keys ;
+    vector<uint64_t> keys ; //stores the keys values in this vector
     //vector<uint64_t> values;
-    vector<uint64_t> hv;
-    uint64_t hvt;
-    size_t n;
-    int st;
+    vector<uint64_t> hv;  //stores the hashvalue of corresponding keys in this
+    uint64_t hvt;   //stores hash value of tombstone
+    size_t n;   // size of hash table
+    int st;     // start point of hash table
     //tombstones are uint64_max;
     public:
     Robinhood_Hash(size_t tn){
@@ -20,17 +20,18 @@ class Robinhood_Hash{
         //values.resize(n);
         n= tn;
         hv.resize(n);
-      
         st=0;
     }
     bool query_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
         int i;
+        // based on hash value setting the iteration point start
         if(hashval < st){
             i = st; 
         }
         else
             i= hashval;
+        // loops until element found(ret 1), empty slot hashval greater than our hashval(ret 0);
         do{
             int temp = hv[i];
             if(keys[i] == x)return 1;
@@ -48,16 +49,20 @@ class Robinhood_Hash{
     }
     
     int insert_(uint64_t x){
+        //hops store the number of iterations done to insert an element (indexes travelled)
         int hops=0;
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
+        // these values are used in shifting data
         uint64_t ind;
         bool b=0;
         if(hashval>= st){
             uint64_t i=hashval;
-            uint64_t tp, tpv;
+            uint64_t tp, tpv; // temp values used in shifting
+            // loop runs until a free slot found
             do{
                 int key= keys[i];
                 uint64_t temp = hv[i];
+                // if keys[i] is 0 then shift and insert happens, if tombstone then maybe we have to iterate more
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
@@ -77,84 +82,18 @@ class Robinhood_Hash{
                         }
                     }
                     else{
-                        if(b){
-                            keys[i] = tp;
-                            hv[i] = tpv;
-                            keys[ind] =x;
-                            hv[ind]= hashval;
-                            hops++;
-                            return hops; 
-                        }
-                        else{
-                            uint64_t j = (i+1)%n;
-                            int tind = i, hvind = 0;
-                            bool b2= 0;
-                            do{
-                                uint64_t temp2= hv[j];
-                                if(keys[j]==UINT64_MAX){
-                                    if((keys[(j+1)%n]!=0 && keys[(j+1)%n]!=UINT64_MAX) ){
-                                        if(b2==0){
-                                        
-                                        }
-                                        else if(hv[(j+1)%n]!=hvind){
-                                        keys[tind] =keys[(j)];
-                                        hv[tind] = hv[(j)];
-                                        tind= j;
-                                        hvind= hv[(j+1)%n];}
-                                    }
-                                    j++;j=j%n;
-                                    hops++;
-                                    continue;
-                                }
-                                else if(keys[j]== 0){hops++;break;}
-                                else if(b==0 && temp2 > hashval){
-                                    hops++;
-                                    break;
-                                }
-                                else{
-                                    if(b2==0){
-                                        hvind =temp2;
-                                        b2=1;
-                                        if( hv[(j+1)%n]!=hvind){
-                                        keys[tind] =keys[(j)];
-                                        hv[tind] = hv[(j)];
-                                        tind= j;
-                                        hvind= hv[(j+1)%n];
-                                        }
-                                    }
-                                    else if( hv[(j+1)%n]!=hvind){
-                                        keys[tind] =keys[(j)];
-                                        hv[tind] = hv[(j)];
-                                        tind= j;
-                                        hvind= hv[(j+1)%n];
-                                    }
-                                    
-                                }
-                                j++;
-                                if(j==n)j=0;
-                                hops++;
-                            }while(j!=st);
-                            
-                                if(j==0)
-                                    j=n-1;
-                                else
-                                    j--;
-                                keys[tind] = keys[j];
-                                hv[tind] = hv[j];
-                                keys[j]=x;
-                                hv[j] = hashval;
-                                
-                                return hops;
-                        }
+                        
                     }
                 }
                 else if(b==0 && temp > hashval ){
+                    // in case before we find empty slot we find the hashval greater than x hash value
                     ind= i;
                     b=1;
                     tp= keys[i];
                     tpv= temp;
                 }
                 else if(b==1){
+                    // shifting of data
                     if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
                     uint64_t to= keys[i], tov= temp;
                     keys[i]= tp;
@@ -167,6 +106,7 @@ class Robinhood_Hash{
                 if(i==n) i=0;
             }while(i!= st);
             uint64_t kp= keys[st], kpv= hv[st];
+            // in case no free slot found then we have to shift the start so that a extra space is there at end
             for(int i=st;i!=hashval;i++){
                 if(i==n)i=0;
                 if(keys[i]== 0 || keys[i]==UINT64_MAX){
@@ -206,9 +146,10 @@ class Robinhood_Hash{
         else{
             uint64_t i=st;
             uint64_t tp, tpv;
-            do{
+             do{
                 int key= keys[i];
                 uint64_t temp = hv[i];
+                // if keys[i] is 0 then shift and insert happens, if tombstone then maybe we have to iterate more
                 if(keys[i] == 0 || keys[i]==UINT64_MAX){
                     if(keys[i] == 0){
                         if(b){
@@ -228,84 +169,18 @@ class Robinhood_Hash{
                         }
                     }
                     else{
-                        if(b){
-                            keys[i] = tp;
-                            hv[i] = tpv;
-                            keys[ind] =x;
-                            hv[ind]= hashval;
-                            hops++;
-                            return hops; 
-                        }
-                        else{
-                            uint64_t j = (i+1)%n;
-                            int tind = i, hvind = 0;
-                            bool b2= 0;
-                            do{
-                                uint64_t temp2= hv[j];
-                                if(keys[j]==UINT64_MAX){
-                                    if((keys[(j+1)%n]!=0 && keys[(j+1)%n]!=UINT64_MAX) ){
-                                        if(b2==0){
-                                        
-                                        }
-                                        else if(hv[(j+1)%n]!=hvind){
-                                        keys[tind] =keys[(j)];
-                                        hv[tind] = hv[(j)];
-                                        tind= j;
-                                        hvind= hv[(j+1)%n];}
-                                    }
-                                    j++;j=j%n;
-                                    hops++;
-                                    continue;
-                                }
-                                else if(keys[j]== 0){hops++;break;}
-                                else if(b==0 && temp2 > hashval){
-                                    hops++;
-                                    break;
-                                }
-                                else{
-                                    if(b2==0){
-                                        hvind =temp2;
-                                        b2=1;
-                                        if( hv[(j+1)%n]!=hvind){
-                                        keys[tind] =keys[(j)];
-                                        hv[tind] = hv[(j)];
-                                        tind= j;
-                                        hvind= hv[(j+1)%n];
-                                        }
-                                    }
-                                    else if( hv[(j+1)%n]!=hvind){
-                                        keys[tind] =keys[(j)];
-                                        hv[tind] = hv[(j)];
-                                        tind= j;
-                                        hvind= hv[(j+1)%n];
-                                    }
-                                    
-                                }
-                                j++;
-                                if(j==n)j=0;
-                                hops++;
-                            }while(j!=st);
-                            
-                                if(j==0)
-                                    j=n-1;
-                                else
-                                    j--;
-                                keys[tind] = keys[j];
-                                hv[tind] = hv[j];
-                                keys[j]=x;
-                                hv[j] = hashval;
-                                
-                                return hops;
-                        }
+                        
                     }
                 }
                 else if(b==0 && temp > hashval ){
+                    // in case before we find empty slot we find the hashval greater than x hash value
                     ind= i;
                     b=1;
                     tp= keys[i];
                     tpv= temp;
                 }
                 else if(b==1){
+                    // shifting of data
                     if(tpv ==  temp ){i++;hops++;i=i%n;continue;}
                     uint64_t to= keys[i], tov= temp;
                     keys[i]= tp;
@@ -318,16 +193,19 @@ class Robinhood_Hash{
                 if(i==n) i=0;
             }while(i!= st);
         }
+        return hops;
     }
     
     void delete_(uint64_t x){
         uint64_t hashval = MurmurHash64A(&x, sizeof(uint64_t), 0)%n;
         int i;
+        //set the start point of iteration based on hashvalue of x
         if(hashval < st){
             i = st; 
         }
         else
             i= hashval;
+        // just like query it loops, here they put tombstone when element found
         do{
             int temp =  hv[i];
             if(keys[i] == x){
@@ -362,16 +240,5 @@ class Robinhood_Hash{
         }while(i!=st);
         return ;
     }
-    void print(){
-     //   cout<<tot<<" total "<<endl;
-        for(int i=0;i<100;i++){
-            cout<<i << " == "<<keys[i]<<"        ";
-        }
-    }
-    void print2(){
-    //    cout<<tot<<" total "<<endl;
-        for(int i=0;i<100;i++){
-            cout<<MurmurHash64A(&keys[i],sizeof(uint64_t),0)%n<<"        ";
-        }
-    } 
+    
 };
