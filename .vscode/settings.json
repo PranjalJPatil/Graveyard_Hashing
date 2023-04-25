@@ -53,7 +53,8 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "hashutil.c": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

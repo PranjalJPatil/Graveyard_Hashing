@@ -1,6 +1,5 @@
 /* 
-  This test code is adpoted from Prof. Pandey's CS 6968 Class.
-  It is used for performance evaluation and testing for the vEB for insert(), query() and successor() operations.
+  Timing experiments for Cuckoo Hashing with quadratic probing
  */
 
 
@@ -9,7 +8,6 @@
 #include <chrono>
 #include <openssl/rand.h>
 #include "cuckoohashing.cpp"
-// #include "main.cpp"
 
 using namespace std::chrono;
 
@@ -48,6 +46,16 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 	safe_rand_bytes((unsigned char *)out_numbers, sizeof(*out_numbers) * N);
+	// high_resolution_clock::time_point t1, t2;
+
+
+	// Generate N numbers for deleting numbers
+	uint32_t *delete_numbers = (uint32_t *)malloc(N * sizeof(uint32_t));
+	if(!out_numbers) {
+		std::cerr << "Malloc out_numbers failed.\n";
+		exit(0);
+	}
+	safe_rand_bytes((unsigned char *)delete_numbers, sizeof(*delete_numbers) * N);
 	high_resolution_clock::time_point t1, t2;
 
 
@@ -67,7 +75,6 @@ int main(int argc, char** argv) {
 
 		t1 = high_resolution_clock::now();
 		for (uint32_t i = 0; i < N; ++i) {
-			// cout << "Inserting item at index " << i << endl;
 			ch.insert(in_numbers [i]);
 		}
 		t2 = high_resolution_clock::now();
@@ -80,6 +87,14 @@ int main(int argc, char** argv) {
 		}
 		t2 = high_resolution_clock::now();
 		std::cout << "Time to lookup " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
+
+
+		t1 = high_resolution_clock::now();
+		for (uint32_t i = 0; i < N; ++i) {
+			ch.deleteItem(delete_numbers[i]);
+		}
+		t2 = high_resolution_clock::now();
+		std::cout << "Time to delete " + std::to_string(N) + " items: " + std::to_string(elapsed(t1, t2)) + " secs\n";
 
 		maxIterations = maxIterations * 2;
 

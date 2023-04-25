@@ -1,8 +1,9 @@
-// #include "quadratic.cpp"
 #include "cuckoohashing.cpp"
 
+//// Debug code for cuckoo hashing probing.
 int main(){
 
+    
     long size = 10;
     double loadFactor = 0.5;
     double enLargeFactor = 2.0;
@@ -13,7 +14,6 @@ int main(){
 
     CuckooHash ch(size, maxIterations,enLargeFactor, loadFactor, size, size, table1Seed, table2Seed);
 
-
     ch.insert(5);
     ch.insert(10);
     ch.insert(20);
@@ -22,15 +22,6 @@ int main(){
 
     bool result = ch.lookup(5);
     cout << "The result is: " <<  result << endl;
-
-
-
-
-
-
-
-
-
 
     return 0;
 }
