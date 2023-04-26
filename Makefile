@@ -1,4 +1,4 @@
-all: test test_2
+all: test test_2 test_standard
 
 CC = g++
 OPT= -g -flto -Ofast
@@ -18,3 +18,4 @@ test_2: main_timing_2.cpp
 clean:
 	rm -f test test.o
 	rm -f test_2 test_2.o
+	rm -f test_standard test_standard.o
